@@ -13,9 +13,7 @@ app = Flask(
 )
 
 CORS(app)
-@app.route("/")
-def index():
-    return app.send_static_file("index.html")
+
 DATABASE_PATH = (
     Path(__file__).resolve().parent.parent
     / "database"
