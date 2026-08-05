@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="el">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AllGasKlima CRM</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <h1>AllGasKlima CRM</h1>
+
+    <div class="search-box">
+        <input
+            type="text"
+            id="phone"
+            placeholder="Αναζήτηση τηλεφώνου..."
+        >
+
+        <button id="searchBtn">
+            Αναζήτηση
+        </button>
+    </div>
+
+    <div id="result"></div>
+
+    <div id="newCustomerForm" class="customer-form hidden">
+        <h2>Νέος πελάτης</h2>
+
+        <input type="text" id="fullname" placeholder="Ονοματεπώνυμο">
+        <input type="text" id="phone1" placeholder="Κύριο τηλέφωνο">
+        <input type="text" id="phone2" placeholder="Δεύτερο τηλέφωνο">
+        <input type="text" id="phone3" placeholder="Τρίτο τηλέφωνο">
+        <input type="text" id="area" placeholder="Περιοχή">
+        <input type="text" id="address" placeholder="Διεύθυνση">
+        <input type="text" id="floor" placeholder="Όροφος">
+
+        <textarea id="notes" placeholder="Σημειώσεις"></textarea>
+
+        <button id="saveCustomerBtn">
+            Αποθήκευση πελάτη
+        </button>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
