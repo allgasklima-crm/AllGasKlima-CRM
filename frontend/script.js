@@ -115,10 +115,23 @@ async function searchCustomer() {
             return;
         }
 
-        newCustomerForm.classList.add("hidden");
+        newCustomerForm.classList.remove("hidden");
 
-        showCustomer(data.customer);
+fullnameInput.value = data.customer.fullname || "";
+phone1Input.value = data.customer.phone1 || "";
+phone2Input.value = data.customer.phone2 || "";
+phone3Input.value = data.customer.phone3 || "";
+areaInput.value = data.customer.area || "";
+addressInput.value = data.customer.address || "";
+floorInput.value = data.customer.floor || "";
+notesInput.value = data.customer.notes || "";
 
+result.innerHTML = "";
+
+newCustomerForm.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+});
     } catch (error) {
         console.error(error);
 
