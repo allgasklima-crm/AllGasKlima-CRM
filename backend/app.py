@@ -1,9 +1,9 @@
-from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS
-import sqlite3
-import time
 from datetime import datetime
 from pathlib import Path
+import sqlite3
+
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
 
 
 app = Flask(
@@ -21,19 +21,40 @@ DATABASE_PATH = (
 )
 
 
-# Εδώ κρατάμε προσωρινά την τελευταία εισερχόμενη κλήση.
-latest_incoming_call = None
-
-
 @app.route("/")
 def index():
-    return send_from_directory("../frontend", "index.html")
+    return send_from_directory(
+        "../frontend",
+        "index.html"
+    )
 
 
 def get_connection():
-    connection = sqlite3.connect(DATABASE_PATH)
+    connection = sqlite3.connect(
+        DATABASE_PATH,
+        timeout=10
+    )
+
     connection.row_factory = sqlite3.Row
+
     return connection
+
+
+def create_call_history_table():
+    connection = get_connection()
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS call_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            phone TEXT NOT NULL,
+            called_at TEXT NOT NULL
+        )
+        """
+    )
+
+    connection.commit()
+    connection.close()
 
 
 def get_customer_by_phone(phone):
@@ -56,9 +77,36 @@ def get_customer_by_phone(phone):
     return customer
 
 
+def make_call_response(call_row):
+    phone = call_row["phone"]
+
+    called_at = datetime.fromisoformat(
+        call_row["called_at"]
+    )
+
+    customer = get_customer_by_phone(phone)
+
+    return {
+        "id": call_row["id"],
+        "phone": phone,
+        "date": called_at.strftime("%d/%m/%Y"),
+        "time": called_at.strftime("%H:%M:%S"),
+        "timestamp": called_at.isoformat(),
+        "found": customer is not None,
+        "customer_name": (
+            customer["fullname"]
+            if customer is not None
+            else None
+        )
+    }
+
+
 @app.get("/api/customer")
 def find_customer():
-    phone = request.args.get("phone", "").strip()
+    phone = request.args.get(
+        "phone",
+        ""
+    ).strip()
 
     if not phone:
         return jsonify({
@@ -84,16 +132,41 @@ def find_customer():
 
 @app.post("/api/customer")
 def create_customer():
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
-    fullname = str(data.get("fullname", "")).strip()
-    phone1 = str(data.get("phone1", "")).strip()
-    phone2 = str(data.get("phone2", "")).strip()
-    phone3 = str(data.get("phone3", "")).strip()
-    area = str(data.get("area", "")).strip()
-    address = str(data.get("address", "")).strip()
-    floor = str(data.get("floor", "")).strip()
-    notes = str(data.get("notes", "")).strip()
+    fullname = str(
+        data.get("fullname", "")
+    ).strip()
+
+    phone1 = str(
+        data.get("phone1", "")
+    ).strip()
+
+    phone2 = str(
+        data.get("phone2", "")
+    ).strip()
+
+    phone3 = str(
+        data.get("phone3", "")
+    ).strip()
+
+    area = str(
+        data.get("area", "")
+    ).strip()
+
+    address = str(
+        data.get("address", "")
+    ).strip()
+
+    floor = str(
+        data.get("floor", "")
+    ).strip()
+
+    notes = str(
+        data.get("notes", "")
+    ).strip()
 
     if not fullname:
         return jsonify({
@@ -106,6 +179,16 @@ def create_customer():
             "success": False,
             "message": "Το κύριο τηλέφωνο είναι υποχρεωτικό."
         }), 400
+
+    existing_customer = get_customer_by_phone(
+        phone1
+    )
+
+    if existing_customer is not None:
+        return jsonify({
+            "success": False,
+            "message": "Υπάρχει ήδη πελάτης με αυτό το τηλέφωνο."
+        }), 409
 
     connection = get_connection()
 
@@ -137,24 +220,28 @@ def create_customer():
         )
 
         connection.commit()
+
         customer_id = cursor.lastrowid
+
+        customer = connection.execute(
+            """
+            SELECT *
+            FROM customers
+            WHERE id = ?
+            """,
+            (customer_id,)
+        ).fetchone()
 
     except sqlite3.IntegrityError:
         connection.close()
 
         return jsonify({
             "success": False,
-            "message": "Υπάρχει ήδη πελάτης με αυτό το κύριο τηλέφωνο."
+            "message": (
+                "Υπάρχει ήδη πελάτης "
+                "με αυτό το κύριο τηλέφωνο."
+            )
         }), 409
-
-    customer = connection.execute(
-        """
-        SELECT *
-        FROM customers
-        WHERE id = ?
-        """,
-        (customer_id,)
-    ).fetchone()
 
     connection.close()
 
@@ -167,11 +254,13 @@ def create_customer():
 
 @app.post("/api/incoming-call")
 def incoming_call():
-    global latest_incoming_call
+    data = request.get_json(
+        silent=True
+    ) or {}
 
-    data = request.get_json(silent=True) or {}
-
-    phone = str(data.get("phone", "")).strip()
+    phone = str(
+        data.get("phone", "")
+    ).strip()
 
     if not phone:
         return jsonify({
@@ -181,47 +270,90 @@ def incoming_call():
 
     now = datetime.now().astimezone()
 
-    latest_incoming_call = {
-        "id": str(time.time_ns()),
-        "phone": phone,
-        "date": now.strftime("%d/%m/%Y"),
-        "time": now.strftime("%H:%M:%S"),
-        "timestamp": now.isoformat()
-    }
+    connection = get_connection()
 
-    customer = get_customer_by_phone(phone)
+    cursor = connection.execute(
+        """
+        INSERT INTO call_history (
+            phone,
+            called_at
+        )
+        VALUES (?, ?)
+        """,
+        (
+            phone,
+            now.isoformat()
+        )
+    )
 
-    if customer:
+    connection.commit()
+
+    call_id = cursor.lastrowid
+
+    call_row = connection.execute(
+        """
+        SELECT *
+        FROM call_history
+        WHERE id = ?
+        """,
+        (call_id,)
+    ).fetchone()
+
+    connection.close()
+
+    call_data = make_call_response(
+        call_row
+    )
+
+    customer = get_customer_by_phone(
+        phone
+    )
+
+    if customer is not None:
         print(
-            f"📞 {latest_incoming_call['date']} "
-            f"{latest_incoming_call['time']} - "
-            f"Αναγνωρίστηκε πελάτης: {customer['fullname']}"
+            f"📞 {call_data['date']} "
+            f"{call_data['time']} - "
+            f"Αναγνωρίστηκε πελάτης: "
+            f"{customer['fullname']}"
         )
 
         return jsonify({
             "success": True,
             "found": True,
-            "call": latest_incoming_call,
+            "call": call_data,
             "customer": dict(customer)
-        })
+        }), 201
 
     print(
-        f"📞 {latest_incoming_call['date']} "
-        f"{latest_incoming_call['time']} - "
+        f"📞 {call_data['date']} "
+        f"{call_data['time']} - "
         f"Άγνωστος αριθμός: {phone}"
     )
 
     return jsonify({
         "success": True,
         "found": False,
-        "call": latest_incoming_call,
+        "call": call_data,
         "phone": phone
-    })
+    }), 201
 
 
 @app.get("/api/latest-call")
 def get_latest_call():
-    if latest_incoming_call is None:
+    connection = get_connection()
+
+    call_row = connection.execute(
+        """
+        SELECT *
+        FROM call_history
+        ORDER BY id DESC
+        LIMIT 1
+        """
+    ).fetchone()
+
+    connection.close()
+
+    if call_row is None:
         return jsonify({
             "success": True,
             "has_call": False
@@ -230,8 +362,83 @@ def get_latest_call():
     return jsonify({
         "success": True,
         "has_call": True,
-        "call": latest_incoming_call
+        "call": make_call_response(call_row)
     })
+
+
+@app.get("/api/calls")
+def get_call_history():
+    limit_text = request.args.get(
+        "limit",
+        "50"
+    )
+
+    try:
+        limit = int(limit_text)
+    except ValueError:
+        limit = 50
+
+    limit = max(
+        1,
+        min(limit, 200)
+    )
+
+    connection = get_connection()
+
+    call_rows = connection.execute(
+        """
+        SELECT *
+        FROM call_history
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (limit,)
+    ).fetchall()
+
+    connection.close()
+
+    calls = [
+        make_call_response(call_row)
+        for call_row in call_rows
+    ]
+
+    return jsonify({
+        "success": True,
+        "calls": calls
+    })
+
+
+@app.delete("/api/calls/<int:call_id>")
+def delete_call(call_id):
+    connection = get_connection()
+
+    cursor = connection.execute(
+        """
+        DELETE FROM call_history
+        WHERE id = ?
+        """,
+        (call_id,)
+    )
+
+    connection.commit()
+
+    deleted = cursor.rowcount > 0
+
+    connection.close()
+
+    if not deleted:
+        return jsonify({
+            "success": False,
+            "message": "Η κλήση δεν βρέθηκε."
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "message": "Η κλήση διαγράφηκε."
+    })
+
+
+create_call_history_table()
 
 
 if __name__ == "__main__":
