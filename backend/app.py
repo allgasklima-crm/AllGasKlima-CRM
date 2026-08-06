@@ -48,12 +48,30 @@ def create_call_history_table():
         CREATE TABLE IF NOT EXISTS call_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             phone TEXT NOT NULL,
-            called_at TEXT NOT NULL
+            called_at TEXT NOT NULL,
+            deleted INTEGER NOT NULL DEFAULT 0
         )
         """
     )
 
     connection.commit()
+
+    columns = [
+        row["name"]
+        for row in connection.execute(
+            "PRAGMA table_info(call_history)"
+        ).fetchall()
+    ]
+
+    if "deleted" not in columns:
+        connection.execute(
+            """
+            ALTER TABLE call_history
+            ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0
+            """
+        )
+        connection.commit()
+
     connection.close()
 
 
@@ -94,10 +112,11 @@ def make_call_response(call_row):
         "timestamp": called_at.isoformat(),
         "found": customer is not None,
         "customer_name": (
-            customer["fullname"]
-            if customer is not None
-            else None
-        )
+    customer["fullname"]
+    if customer is not None
+    else None
+),
+"deleted": bool(call_row["deleted"])
     }
 
 
@@ -414,7 +433,8 @@ def delete_call(call_id):
 
     cursor = connection.execute(
         """
-        DELETE FROM call_history
+        UPDATE call_history
+        SET deleted = 1
         WHERE id = ?
         """,
         (call_id,)
@@ -434,9 +454,38 @@ def delete_call(call_id):
 
     return jsonify({
         "success": True,
-        "message": "Η κλήση διαγράφηκε."
+        "message": "Η κλήση μεταφέρθηκε στα διαγραμμένα."
     })
+@app.post("/api/calls/<int:call_id>/restore")
+def restore_call(call_id):
+    connection = get_connection()
 
+    cursor = connection.execute(
+        """
+        UPDATE call_history
+        SET deleted = 0
+        WHERE id = ?
+        """,
+        (call_id,)
+    )
+
+    connection.commit()
+
+    restored = cursor.rowcount > 0
+
+    connection.close()
+
+    if not restored:
+        return jsonify({
+            "success": False,
+            "message": "Η κλήση δεν βρέθηκε."
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "message": "Η κλήση επαναφέρθηκε."
+    })
+    
 
 create_call_history_table()
 

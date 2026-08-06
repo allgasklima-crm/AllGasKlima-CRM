@@ -4,45 +4,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>AllGasKlima CRM</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <h1>AllGasKlima CRM</h1>
+    <header class="topbar">
+        <div>
+            <h1>AllGasKlima CRM</h1>
+            <p>Κέντρο διαχείρισης πελατών, κλήσεων και παραγγελιών</p>
+        </div>
 
-    <div class="search-box">
-        <input
-            type="text"
-            id="phone"
-            placeholder="Αναζήτηση τηλεφώνου..."
-        >
+        <div class="topbar-status">
+            <span class="status-dot"></span>
+            <span>Τηλεφωνικό κέντρο ενεργό</span>
+        </div>
+    </header>
 
-        <button id="searchBtn">
-            Αναζήτηση
-        </button>
+    <main class="crm-container">
+
+        <section class="incoming-call-card">
+
+            <div class="section-title-row">
+                <div>
+                    <span class="section-kicker">Ζωντανή αναγνώριση</span>
+                    <h2>📞 Εισερχόμενη κλήση</h2>
+                </div>
+
+                <div class="call-time-box">
+                    <span>Ημερομηνία</span>
+                    <strong id="callDate">--/--/----</strong>
+
+                    <span>Ώρα</span>
+                    <strong id="callTime">--:--:--</strong>
+                </div>
+            </div>
+
+            <div class="call-search-row">
+
+                <div class="field-group phone-search-field">
+                    <label for="phone">Αριθμός τηλεφώνου</label>
+
+                    <input
+                        type="text"
+                        id="phone"
+                        placeholder="Πληκτρολόγησε ή περίμενε εισερχόμενη κλήση"
+                    >
+                </div>
+
+                <button id="searchBtn" class="btn btn-primary">
+                    Αναζήτηση
+                </button>
+
+                <button type="button" class="btn btn-secondary">
+                    Κλήση πελάτη
+                </button>
+
+            </div>
+
+            <div id="result" class="result-area"></div>
+
+        </section>
+
+        <section class="main-grid">
+
+    <div class="left-column">
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <span class="section-kicker">Καρτέλα πελάτη</span>
+                    <h2>Στοιχεία πελάτη</h2>
+                </div>
+
+                <span class="customer-status">Νέος πελάτης</span>
+            </div>
+
+            <div id="newCustomerForm" class="customer-form">
+
+                <div class="form-grid">
+
+                    <div class="field-group full-width">
+                        <label for="fullname">Ονοματεπώνυμο</label>
+                        <input
+                            type="text"
+                            id="fullname"
+                            placeholder="Ονοματεπώνυμο πελάτη"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="phone1">Κύριο τηλέφωνο</label>
+                        <input
+                            type="text"
+                            id="phone1"
+                            placeholder="Κύριο τηλέφωνο"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="phone2">Δεύτερο τηλέφωνο</label>
+                        <input
+                            type="text"
+                            id="phone2"
+                            placeholder="Δεύτερο τηλέφωνο"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="phone3">Τρίτο τηλέφωνο</label>
+                        <input
+                            type="text"
+                            id="phone3"
+                            placeholder="Τρίτο τηλέφωνο"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="area">Περιοχή</label>
+                        <input
+                            type="text"
+                            id="area"
+                            placeholder="Περιοχή"
+                        >
+                    </div>
+
+                    <div class="field-group full-width">
+                        <label for="address">Διεύθυνση</label>
+                        <input
+                            type="text"
+                            id="address"
+                            placeholder="Οδός και αριθμός"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label for="floor">Όροφος</label>
+                        <input
+                            type="text"
+                            id="floor"
+                            placeholder="Όροφος"
+                        >
+                    </div>
+
+                    <div class="field-group">
+                        <label>Χάρτης</label>
+
+                        <button
+                            type="button"
+                            class="btn btn-map"
+                        >
+                            📍 Άνοιγμα Google Maps
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="field-group notes-field">
+                    <label for="notes">Παρατηρήσεις πελάτη</label>
+
+                    <textarea
+                        id="notes"
+                        placeholder="Σημαντικές πληροφορίες για τον πελάτη, την πρόσβαση ή την παράδοση"
+                    ></textarea>
+                </div>
+
+                <button
+                    id="saveCustomerBtn"
+                    class="btn btn-primary btn-full"
+                >
+                    Αποθήκευση πελάτη
+                </button>
+
+            </div>
+
+        </section>
+
     </div>
 
-    <div id="result"></div>
+    <aside class="right-column">
 
-    <div id="newCustomerForm" class="customer-form hidden">
-        <h2>Νέος πελάτης</h2>
+        <section class="panel">
 
-        <input type="text" id="fullname" placeholder="Ονοματεπώνυμο">
-        <input type="text" id="phone1" placeholder="Κύριο τηλέφωνο">
-        <input type="text" id="phone2" placeholder="Δεύτερο τηλέφωνο">
-        <input type="text" id="phone3" placeholder="Τρίτο τηλέφωνο">
-        <input type="text" id="area" placeholder="Περιοχή">
-        <input type="text" id="address" placeholder="Διεύθυνση">
-        <input type="text" id="floor" placeholder="Όροφος">
+            <div class="panel-heading">
+                <div>
+                    <span class="section-kicker">Νέα καταχώριση</span>
+                    <h2>Παραγγελία φιαλών</h2>
+                </div>
+            </div>
 
-        <textarea id="notes" placeholder="Σημειώσεις"></textarea>
+            <div class="order-grid">
 
-        <button id="saveCustomerBtn">
-            Αποθήκευση πελάτη
-        </button>
+                <label class="order-option">
+                    <input type="checkbox">
+                    <span>Φιάλη 3 kg</span>
+                </label>
+
+                <label class="order-option">
+                    <input type="checkbox">
+                    <span>Φιάλη 10 kg μεταλλική</span>
+                </label>
+
+                <label class="order-option">
+                    <input type="checkbox">
+                    <span>Φιάλη 10 kg πλαστική</span>
+                </label>
+
+                <label class="order-option">
+                    <input type="checkbox">
+                    <span>Φιάλη 13 kg</span>
+                </label>
+
+                <label class="order-option">
+                    <input type="checkbox">
+                    <span>Φιάλη 25 kg</span>
+                </label>
+
+                <label class="order-option">
+                    <input type="checkbox">
+                    <span>Παραλαβή κενής φιάλης</span>
+                </label>
+
+            </div>
+
+            <div class="field-group order-notes">
+                <label for="orderNotes">Παρατηρήσεις παραγγελίας</label>
+
+                <textarea
+                    id="orderNotes"
+                    placeholder="Ώρα παράδοσης, τρόπος πληρωμής, κουδούνι, πρόσθετα προϊόντα ή άλλες οδηγίες"
+                ></textarea>
+            </div>
+
+            <div class="action-row">
+
+                <button type="button" class="btn btn-secondary">
+                    Αποθήκευση παραγγελίας
+                </button>
+
+                <button type="button" class="btn btn-success">
+                    Αποστολή στον οδηγό
+                </button>
+
+            </div>
+
+        </section>
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <span class="section-kicker">Σημαντικές οδηγίες</span>
+                    <h2>Παρατηρήσεις</h2>
+                </div>
+            </div>
+
+            <textarea
+                class="large-notes"
+                placeholder="Γράψε εδώ οτιδήποτε πρέπει να γνωρίζει το τηλεφωνικό κέντρο ή ο οδηγός"
+            ></textarea>
+
+        </section>
+
+    </aside>
+
+</section>
+
+<section class="panel history-panel full-history-panel">
+
+    <div class="panel-heading">
+
+        <div>
+            <span class="section-kicker">Προηγούμενες κινήσεις</span>
+            <h2>Ιστορικό κλήσεων</h2>
+        </div>
+
+        <div class="history-actions">
+
+            <button
+                id="deleteCallHistoryBtn"
+                class="btn btn-danger"
+            >
+                🗑 Διαγραφή ιστορικού
+            </button>
+
+            <button
+                id="restoreCallHistoryBtn"
+                class="btn btn-secondary"
+                style="display:none"
+            >
+                ↩ Επαναφορά
+            </button>
+
+        </div>
+
     </div>
+
+    <div
+        id="callHistoryList"
+        class="call-history-list"
+    >
+
+        <div class="empty-state">
+
+            <span>📋</span>
+
+            <p>Δεν υπάρχουν ακόμη κλήσεις.</p>
+
+        </div>
+
+    </div>
+
+</section>
+        <section class="daily-summary">
+
+            <div class="summary-card">
+                <span>Κλήσεις σήμερα</span>
+                <strong>0</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>Παραγγελίες σήμερα</span>
+                <strong>0</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>Σε διανομή</span>
+                <strong>0</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>Ολοκληρωμένες</span>
+                <strong>0</strong>
+            </div>
+
+        </section>
+
+    </main>
 
     <script src="script.js"></script>
 

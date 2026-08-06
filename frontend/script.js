@@ -266,8 +266,8 @@ async function checkIncomingCall() {
 
         phoneInput.value = data.call.phone;
 
-        searchCustomer();
-
+searchCustomer();
+loadCallHistory();
     } catch (error) {
 
         console.error(error);
@@ -281,3 +281,322 @@ async function checkIncomingCall() {
 }
 
 setInterval(checkIncomingCall, 1000);
+const callHistoryList =
+    document.getElementById("callHistoryList");
+
+const deleteCallHistoryBtn =
+    document.getElementById("deleteCallHistoryBtn");
+
+const restoreCallHistoryBtn =
+    document.getElementById("restoreCallHistoryBtn");
+
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+function createCallHistoryItem(call) {
+    const customerName =
+        call.customer_name
+            ? escapeHtml(call.customer_name)
+            : "Άγνωστος αριθμός";
+
+    return `
+        <div class="call-history-item">
+            <div class="call-history-information">
+
+                <strong>
+                    ${customerName}
+                </strong>
+
+                <span>
+                    📞 ${escapeHtml(call.phone)}
+                </span>
+
+                <span>
+                    📅 ${escapeHtml(call.date)}
+                </span>
+
+                <span>
+                    🕒 ${escapeHtml(call.time)}
+                </span>
+
+            </div>
+
+            <button
+                type="button"
+                class="delete-single-call-btn"
+                data-call-id="${call.id}"
+            >
+                Διαγραφή
+            </button>
+        </div>
+    `;
+}
+
+
+async function loadCallHistory() {
+    if (!callHistoryList) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:5000/api/calls?limit=200",
+            {
+                cache: "no-store"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            callHistoryList.innerHTML = `
+                <div class="empty-state">
+                    <span>⚠️</span>
+                    <p>Δεν φορτώθηκε το ιστορικό κλήσεων.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+        const activeCalls = data.calls.filter(
+            call => !call.deleted
+        );
+
+        const deletedCalls = data.calls.filter(
+            call => call.deleted
+        );
+
+        if (activeCalls.length === 0) {
+            callHistoryList.innerHTML = `
+                <div class="empty-state">
+                    <span>📞</span>
+                    <p>Δεν υπάρχουν ακόμη κλήσεις.</p>
+                </div>
+            `;
+        } else {
+            callHistoryList.innerHTML =
+                activeCalls
+                    .map(createCallHistoryItem)
+                    .join("");
+        }
+
+        if (restoreCallHistoryBtn) {
+            restoreCallHistoryBtn.style.display =
+                deletedCalls.length > 0
+                    ? "inline-flex"
+                    : "none";
+        }
+
+    } catch (error) {
+        console.error(
+            "Σφάλμα φόρτωσης ιστορικού:",
+            error
+        );
+
+        callHistoryList.innerHTML = `
+            <div class="empty-state">
+                <span>⚠️</span>
+                <p>Δεν υπάρχει σύνδεση με τον server.</p>
+            </div>
+        `;
+    }
+}
+
+
+async function deleteSingleCall(callId) {
+    try {
+        const response = await fetch(
+            `http://127.0.0.1:5000/api/calls/${callId}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            alert(
+                data.message ||
+                "Δεν έγινε η διαγραφή."
+            );
+
+            return;
+        }
+
+        await loadCallHistory();
+
+    } catch (error) {
+        console.error(error);
+
+        alert(
+            "Δεν υπάρχει σύνδεση με τον server."
+        );
+    }
+}
+
+
+async function deleteAllCallHistory() {
+    const confirmed = confirm(
+        "Θέλεις να διαγράψεις όλο το ιστορικό κλήσεων;"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    deleteCallHistoryBtn.disabled = true;
+    deleteCallHistoryBtn.textContent = "Διαγραφή...";
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:5000/api/calls?limit=200",
+            {
+                cache: "no-store"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            alert(
+                "Δεν φορτώθηκε το ιστορικό."
+            );
+
+            return;
+        }
+
+        const activeCalls = data.calls.filter(
+            call => !call.deleted
+        );
+
+        for (const call of activeCalls) {
+            await fetch(
+                `http://127.0.0.1:5000/api/calls/${call.id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+        }
+
+        await loadCallHistory();
+
+    } catch (error) {
+        console.error(error);
+
+        alert(
+            "Δεν υπάρχει σύνδεση με τον server."
+        );
+
+    } finally {
+        deleteCallHistoryBtn.disabled = false;
+        deleteCallHistoryBtn.textContent =
+            "🗑 Διαγραφή ιστορικού";
+    }
+}
+
+
+async function restoreDeletedCallHistory() {
+    restoreCallHistoryBtn.disabled = true;
+    restoreCallHistoryBtn.textContent = "Επαναφορά...";
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:5000/api/calls?limit=200",
+            {
+                cache: "no-store"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            alert(
+                "Δεν φορτώθηκαν οι διαγραμμένες κλήσεις."
+            );
+
+            return;
+        }
+
+        const deletedCalls = data.calls.filter(
+            call => call.deleted
+        );
+
+        for (const call of deletedCalls) {
+            await fetch(
+                `http://127.0.0.1:5000/api/calls/${call.id}/restore`,
+                {
+                    method: "POST"
+                }
+            );
+        }
+
+        await loadCallHistory();
+
+    } catch (error) {
+        console.error(error);
+
+        alert(
+            "Δεν υπάρχει σύνδεση με τον server."
+        );
+
+    } finally {
+        restoreCallHistoryBtn.disabled = false;
+        restoreCallHistoryBtn.textContent =
+            "↩ Επαναφορά";
+    }
+}
+
+
+if (callHistoryList) {
+    callHistoryList.addEventListener(
+        "click",
+        event => {
+            const deleteButton =
+                event.target.closest(
+                    ".delete-single-call-btn"
+                );
+
+            if (!deleteButton) {
+                return;
+            }
+
+            const callId =
+                deleteButton.dataset.callId;
+
+            deleteSingleCall(callId);
+        }
+    );
+}
+
+
+if (deleteCallHistoryBtn) {
+    deleteCallHistoryBtn.addEventListener(
+        "click",
+        deleteAllCallHistory
+    );
+}
+
+
+if (restoreCallHistoryBtn) {
+    restoreCallHistoryBtn.addEventListener(
+        "click",
+        restoreDeletedCallHistory
+    );
+}
+
+
+loadCallHistory();
+
+setInterval(
+    loadCallHistory,
+    5000
+);
