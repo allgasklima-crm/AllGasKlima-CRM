@@ -23,7 +23,7 @@ CRM_INCOMING_CALL_URL = (
 
 ROUTER_USERNAME = "user"
 
-# Βάλε μέσα στα εισαγωγικά τον πραγματικό κωδικό του user.
+# Βάλε εδώ τον πραγματικό κωδικό του router.
 ROUTER_PASSWORD = "MWNDAQ6W"
 
 CHECK_INTERVAL_SECONDS = 2
@@ -114,7 +114,10 @@ def get_latest_incoming_number(session):
                 len(values) >= 3
                 and values[0] == "Line 1"
             ):
-                return values[1]
+                incoming_number = values[1].strip()
+
+                if incoming_number:
+                    return incoming_number
 
     return None
 

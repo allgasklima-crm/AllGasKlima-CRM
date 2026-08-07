@@ -2,19 +2,56 @@ const searchBtn = document.getElementById("searchBtn");
 const phoneInput = document.getElementById("phone");
 const result = document.getElementById("result");
 
-const newCustomerForm = document.getElementById("newCustomerForm");
+const newCustomerForm =
+    document.getElementById("newCustomerForm");
 
-const fullnameInput = document.getElementById("fullname");
-const phone1Input = document.getElementById("phone1");
-const phone2Input = document.getElementById("phone2");
-const phone3Input = document.getElementById("phone3");
-const areaInput = document.getElementById("area");
-const addressInput = document.getElementById("address");
-const floorInput = document.getElementById("floor");
-const notesInput = document.getElementById("notes");
+const newCustomerBtn =
+    document.getElementById("newCustomerBtn");
 
-const saveCustomerBtn = document.getElementById("saveCustomerBtn");
+const fullnameInput =
+    document.getElementById("fullname");
 
+const phone1Input =
+    document.getElementById("phone1");
+
+const phone2Input =
+    document.getElementById("phone2");
+
+const phone3Input =
+    document.getElementById("phone3");
+
+const areaInput =
+    document.getElementById("area");
+
+const addressInput =
+    document.getElementById("address");
+
+const floorInput =
+    document.getElementById("floor");
+
+const notesInput =
+    document.getElementById("notes");
+
+const saveCustomerBtn =
+    document.getElementById("saveCustomerBtn");
+
+const callHistoryList =
+    document.getElementById("callHistoryList");
+
+const deleteCallHistoryBtn =
+    document.getElementById("deleteCallHistoryBtn");
+
+const restoreCallHistoryBtn =
+    document.getElementById("restoreCallHistoryBtn");
+
+
+let lastIncomingCallId = null;
+let incomingCallCheckRunning = false;
+
+
+/* =========================================================
+   ΒΟΗΘΗΤΙΚΕΣ ΣΥΝΑΡΤΗΣΕΙΣ ΠΕΛΑΤΗ
+========================================================= */
 
 function clearCustomerForm() {
     fullnameInput.value = "";
@@ -28,118 +65,166 @@ function clearCustomerForm() {
 }
 
 
-function showCustomer(customer) {
-    result.innerHTML = `
-        <div class="customer-card">
-            <h2>${customer.fullname}</h2>
+function fillCustomerForm(customer) {
+    fullnameInput.value =
+        customer.fullname || "";
 
-            <p>
-                <b>Κύριο τηλέφωνο:</b>
-                ${customer.phone1 || "-"}
-            </p>
+    phone1Input.value =
+        customer.phone1 || "";
 
-            <p>
-                <b>Δεύτερο τηλέφωνο:</b>
-                ${customer.phone2 || "-"}
-            </p>
+    phone2Input.value =
+        customer.phone2 || "";
 
-            <p>
-                <b>Τρίτο τηλέφωνο:</b>
-                ${customer.phone3 || "-"}
-            </p>
+    phone3Input.value =
+        customer.phone3 || "";
 
-            <p>
-                <b>Περιοχή:</b>
-                ${customer.area || "-"}
-            </p>
+    areaInput.value =
+        customer.area || "";
 
-            <p>
-                <b>Διεύθυνση:</b>
-                ${customer.address || "-"}
-            </p>
+    addressInput.value =
+        customer.address || "";
 
-            <p>
-                <b>Όροφος:</b>
-                ${customer.floor || "-"}
-            </p>
+    floorInput.value =
+        customer.floor || "";
 
-            <p>
-                <b>Σημειώσεις:</b>
-                ${customer.notes || "-"}
-            </p>
-        </div>
-    `;
+    notesInput.value =
+        customer.notes || "";
 }
 
 
-async function searchCustomer() {
-    const phone = phoneInput.value.trim();
+function isProbablyPhone(value) {
+    const cleanedValue = value.replace(
+        /[\s()+-]/g,
+        ""
+    );
 
-    if (phone === "") {
-        result.innerHTML = "Πληκτρολόγησε έναν αριθμό.";
-        newCustomerForm.classList.add("hidden");
+    return /^\d+$/.test(cleanedValue);
+}
+
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+/* =========================================================
+   ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ
+   Το επάνω πεδίο δέχεται όνομα, επώνυμο ή τηλέφωνο.
+========================================================= */
+
+async function searchCustomer() {
+    const searchText =
+        phoneInput.value.trim();
+
+    if (searchText === "") {
+        result.innerHTML =
+            "Γράψε όνομα, επώνυμο ή αριθμό τηλεφώνου.";
+
         return;
     }
 
     result.innerHTML = "Αναζήτηση...";
-    newCustomerForm.classList.add("hidden");
 
     try {
+        /*
+         * Κρατάμε το όνομα του query parameter ως "phone"
+         * για να είναι συμβατό με το υπάρχον app.py.
+         *
+         * Το app.py πρέπει να ψάχνει αυτό το κείμενο:
+         * - στα phone1, phone2, phone3
+         * - και στο fullname
+         */
         const response = await fetch(
-            "http://127.0.0.1:5000/api/customer?phone=" +
-            encodeURIComponent(phone)
+            "/api/customer?phone=" +
+            encodeURIComponent(searchText),
+            {
+                cache: "no-store"
+            }
         );
 
         const data = await response.json();
 
         if (!response.ok || !data.success) {
             result.innerHTML =
-                data.message || "Παρουσιάστηκε σφάλμα.";
+                data.message ||
+                "Παρουσιάστηκε σφάλμα στην αναζήτηση.";
+
             return;
         }
 
         if (!data.found) {
             clearCustomerForm();
 
-            result.innerHTML =
-                "Δεν βρέθηκε πελάτης με το τηλέφωνο <b>" +
-                phone +
-                "</b>.";
+            result.innerHTML = `
+                <div class="incoming-call-message">
+                    Δεν βρέθηκε πελάτης με:
+                    <strong>${escapeHtml(searchText)}</strong>
+                </div>
+            `;
 
-            phone1Input.value = phone;
+            /*
+             * Αν γράφτηκε αριθμός, τον βάζουμε στο κύριο τηλέφωνο.
+             * Αν γράφτηκε όνομα, το βάζουμε στο ονοματεπώνυμο.
+             */
+            if (isProbablyPhone(searchText)) {
+                phone1Input.value = searchText;
+            } else {
+                fullnameInput.value = searchText;
+            }
 
-            newCustomerForm.classList.remove("hidden");
+            newCustomerForm.classList.remove(
+                "hidden"
+            );
 
-            fullnameInput.focus();
+            if (isProbablyPhone(searchText)) {
+                fullnameInput.focus();
+            } else {
+                phone1Input.focus();
+            }
 
             return;
         }
 
-        newCustomerForm.classList.remove("hidden");
+        fillCustomerForm(data.customer);
 
-fullnameInput.value = data.customer.fullname || "";
-phone1Input.value = data.customer.phone1 || "";
-phone2Input.value = data.customer.phone2 || "";
-phone3Input.value = data.customer.phone3 || "";
-areaInput.value = data.customer.area || "";
-addressInput.value = data.customer.address || "";
-floorInput.value = data.customer.floor || "";
-notesInput.value = data.customer.notes || "";
+        newCustomerForm.classList.remove(
+            "hidden"
+        );
 
-result.innerHTML = "";
+        result.innerHTML = `
+            <div class="success-message">
+                Βρέθηκε ο πελάτης:
+                <strong>
+                    ${escapeHtml(data.customer.fullname)}
+                </strong>
+            </div>
+        `;
 
-newCustomerForm.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-});
+        newCustomerForm.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
     } catch (error) {
-        console.error(error);
+        console.error(
+            "Σφάλμα αναζήτησης πελάτη:",
+            error
+        );
 
         result.innerHTML =
             "Δεν υπάρχει σύνδεση με τον server.";
     }
 }
 
+
+/* =========================================================
+   ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ
+========================================================= */
 
 async function saveCustomer() {
     const customerData = {
@@ -158,7 +243,6 @@ async function saveCustomer() {
             "Το ονοματεπώνυμο είναι υποχρεωτικό.";
 
         fullnameInput.focus();
-
         return;
     }
 
@@ -167,24 +251,28 @@ async function saveCustomer() {
             "Το κύριο τηλέφωνο είναι υποχρεωτικό.";
 
         phone1Input.focus();
-
         return;
     }
 
     saveCustomerBtn.disabled = true;
-    saveCustomerBtn.textContent = "Αποθήκευση...";
+    saveCustomerBtn.textContent =
+        "Αποθήκευση...";
 
-    result.innerHTML = "Γίνεται αποθήκευση...";
+    result.innerHTML =
+        "Γίνεται αποθήκευση...";
 
     try {
         const response = await fetch(
-            "http://127.0.0.1:5000/api/customer",
+            "/api/customer",
             {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type":
+                        "application/json"
                 },
-                body: JSON.stringify(customerData)
+                body: JSON.stringify(
+                    customerData
+                )
             }
         );
 
@@ -192,15 +280,17 @@ async function saveCustomer() {
 
         if (!response.ok || !data.success) {
             result.innerHTML =
-                data.message || "Δεν έγινε η αποθήκευση.";
+                data.message ||
+                "Δεν έγινε η αποθήκευση.";
 
             return;
         }
 
-        newCustomerForm.classList.add("hidden");
-
         phoneInput.value =
-            data.customer.phone1 || customerData.phone1;
+            data.customer.phone1 ||
+            customerData.phone1;
+
+        fillCustomerForm(data.customer);
 
         result.innerHTML = `
             <div class="success-message">
@@ -208,48 +298,91 @@ async function saveCustomer() {
             </div>
         `;
 
-        setTimeout(() => {
-            showCustomer(data.customer);
-        }, 1200);
-
-        clearCustomerForm();
-
     } catch (error) {
-        console.error(error);
+        console.error(
+            "Σφάλμα αποθήκευσης πελάτη:",
+            error
+        );
 
         result.innerHTML =
             "Δεν υπάρχει σύνδεση με τον server.";
+
     } finally {
         saveCustomerBtn.disabled = false;
-
         saveCustomerBtn.textContent =
             "Αποθήκευση πελάτη";
     }
 }
 
 
-searchBtn.addEventListener(
-    "click",
-    searchCustomer
-);
+/* =========================================================
+   ΚΟΥΜΠΙ ΝΕΟΣ ΠΕΛΑΤΗΣ
+========================================================= */
 
-saveCustomerBtn.addEventListener(
-    "click",
-    saveCustomer
-);
+function startNewCustomer() {
+    /*
+     * Καθαρίζει την επάνω αναζήτηση και όλα τα στοιχεία.
+     * Δεν αλλάζει το lastIncomingCallId.
+     * Έτσι η προηγούμενη κλήση δεν εμφανίζεται ξανά.
+     */
+    phoneInput.value = "";
+    result.innerHTML = "";
 
-phoneInput.addEventListener(
-    "keydown",
-    (event) => {
-        if (event.key === "Enter") {
-            searchCustomer();
-        }
+    clearCustomerForm();
+
+    /*
+     * Ξετικάρει όλες τις φιάλες και την παραλαβή κενής.
+     */
+    document
+        .querySelectorAll(
+            '.order-option input[type="checkbox"]'
+        )
+        .forEach((checkbox) => {
+            checkbox.checked = false;
+        });
+
+    /*
+     * Καθαρίζει τις παρατηρήσεις παραγγελίας.
+     */
+    const orderNotesInput =
+        document.getElementById(
+            "orderNotes"
+        );
+
+    if (orderNotesInput) {
+        orderNotesInput.value = "";
     }
-);let lastIncomingCallId = null;
-let incomingCallCheckRunning = false;
+
+    /*
+     * Καθαρίζει τις σημαντικές οδηγίες δεξιά.
+     */
+    const importantNotesInput =
+        document.querySelector(
+            ".large-notes"
+        );
+
+    if (importantNotesInput) {
+        importantNotesInput.value = "";
+    }
+
+    newCustomerForm.classList.remove(
+        "hidden"
+    );
+
+    fullnameInput.focus();
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
+
+
+/* =========================================================
+   ΑΝΑΓΝΩΡΙΣΗ ΕΙΣΕΡΧΟΜΕΝΗΣ ΚΛΗΣΗΣ
+========================================================= */
 
 async function checkIncomingCall() {
-
     if (incomingCallCheckRunning) {
         return;
     }
@@ -257,9 +390,8 @@ async function checkIncomingCall() {
     incomingCallCheckRunning = true;
 
     try {
-
         const response = await fetch(
-            "http://127.0.0.1:5000/api/latest-call",
+            "/api/latest-call",
             {
                 cache: "no-store"
             }
@@ -267,57 +399,110 @@ async function checkIncomingCall() {
 
         const data = await response.json();
 
-        if (!data.success || !data.has_call) {
+        if (
+            !response.ok ||
+            !data.success ||
+            !data.has_call ||
+            !data.call
+        ) {
             return;
         }
 
-        if (data.call.id === lastIncomingCallId) {
+        /*
+         * Αν είναι η ίδια κλήση που έχουμε ήδη επεξεργαστεί,
+         * δεν ξαναγεμίζουμε τα πεδία.
+         */
+        if (
+            data.call.id ===
+            lastIncomingCallId
+        ) {
             return;
         }
 
-        lastIncomingCallId = data.call.id;
+        const incomingPhone = String(
+            data.call.phone || ""
+        ).trim();
 
-        phoneInput.value = data.call.phone;
+        if (incomingPhone === "") {
+            return;
+        }
 
-searchCustomer();
-loadCallHistory();
+        /*
+         * Σημειώνουμε πρώτα το ID ως επεξεργασμένο.
+         * Έτσι δεν επαναλαμβάνεται η ίδια κλήση.
+         */
+        lastIncomingCallId =
+            data.call.id;
+
+        phoneInput.value =
+            incomingPhone;
+
+        await searchCustomer();
+        await loadCallHistory();
+
     } catch (error) {
-
-        console.error(error);
+        console.error(
+            "Σφάλμα ελέγχου κλήσης:",
+            error
+        );
 
     } finally {
-
         incomingCallCheckRunning = false;
+    }
+}
 
+
+/*
+ * Όταν ανοίγει η σελίδα, αποθηκεύουμε το ID της ήδη
+ * υπάρχουσας τελευταίας κλήσης χωρίς να ανοίγουμε παλιά καρτέλα.
+ *
+ * Από εκεί και μετά εμφανίζονται μόνο πραγματικά νέες κλήσεις.
+ */
+async function initializeIncomingCallWatcher() {
+    try {
+        const response = await fetch(
+            "/api/latest-call",
+            {
+                cache: "no-store"
+            }
+        );
+
+        const data = await response.json();
+
+        if (
+            response.ok &&
+            data.success &&
+            data.has_call &&
+            data.call
+        ) {
+            lastIncomingCallId =
+                data.call.id;
+        }
+
+    } catch (error) {
+        console.error(
+            "Δεν αρχικοποιήθηκε η παρακολούθηση κλήσεων:",
+            error
+        );
     }
 
+    setInterval(
+        checkIncomingCall,
+        1000
+    );
 }
 
-setInterval(checkIncomingCall, 1000);
-const callHistoryList =
-    document.getElementById("callHistoryList");
 
-const deleteCallHistoryBtn =
-    document.getElementById("deleteCallHistoryBtn");
-
-const restoreCallHistoryBtn =
-    document.getElementById("restoreCallHistoryBtn");
-
-
-function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
+/* =========================================================
+   ΙΣΤΟΡΙΚΟ ΚΛΗΣΕΩΝ
+========================================================= */
 
 function createCallHistoryItem(call) {
     const customerName =
         call.customer_name
-            ? escapeHtml(call.customer_name)
+            ? escapeHtml(
+                call.customer_name
+            )
             : "Άγνωστος αριθμός";
 
     return `
@@ -361,7 +546,7 @@ async function loadCallHistory() {
 
     try {
         const response = await fetch(
-            "http://127.0.0.1:5000/api/calls?limit=200",
+            "/api/calls?limit=200",
             {
                 cache: "no-store"
             }
@@ -373,32 +558,40 @@ async function loadCallHistory() {
             callHistoryList.innerHTML = `
                 <div class="empty-state">
                     <span>⚠️</span>
-                    <p>Δεν φορτώθηκε το ιστορικό κλήσεων.</p>
+                    <p>
+                        Δεν φορτώθηκε το ιστορικό κλήσεων.
+                    </p>
                 </div>
             `;
 
             return;
         }
 
-        const activeCalls = data.calls.filter(
-            call => !call.deleted
-        );
+        const activeCalls =
+            data.calls.filter(
+                call => !call.deleted
+            );
 
-        const deletedCalls = data.calls.filter(
-            call => call.deleted
-        );
+        const deletedCalls =
+            data.calls.filter(
+                call => call.deleted
+            );
 
         if (activeCalls.length === 0) {
             callHistoryList.innerHTML = `
                 <div class="empty-state">
                     <span>📞</span>
-                    <p>Δεν υπάρχουν ακόμη κλήσεις.</p>
+                    <p>
+                        Δεν υπάρχουν ακόμη κλήσεις.
+                    </p>
                 </div>
             `;
         } else {
             callHistoryList.innerHTML =
                 activeCalls
-                    .map(createCallHistoryItem)
+                    .map(
+                        createCallHistoryItem
+                    )
                     .join("");
         }
 
@@ -418,17 +611,21 @@ async function loadCallHistory() {
         callHistoryList.innerHTML = `
             <div class="empty-state">
                 <span>⚠️</span>
-                <p>Δεν υπάρχει σύνδεση με τον server.</p>
+                <p>
+                    Δεν υπάρχει σύνδεση με τον server.
+                </p>
             </div>
         `;
     }
 }
 
 
-async function deleteSingleCall(callId) {
+async function deleteSingleCall(
+    callId
+) {
     try {
         const response = await fetch(
-            `http://127.0.0.1:5000/api/calls/${callId}`,
+            `/api/calls/${callId}`,
             {
                 method: "DELETE"
             }
@@ -467,11 +664,12 @@ async function deleteAllCallHistory() {
     }
 
     deleteCallHistoryBtn.disabled = true;
-    deleteCallHistoryBtn.textContent = "Διαγραφή...";
+    deleteCallHistoryBtn.textContent =
+        "Διαγραφή...";
 
     try {
         const response = await fetch(
-            "http://127.0.0.1:5000/api/calls?limit=200",
+            "/api/calls?limit=200",
             {
                 cache: "no-store"
             }
@@ -487,13 +685,14 @@ async function deleteAllCallHistory() {
             return;
         }
 
-        const activeCalls = data.calls.filter(
-            call => !call.deleted
-        );
+        const activeCalls =
+            data.calls.filter(
+                call => !call.deleted
+            );
 
         for (const call of activeCalls) {
             await fetch(
-                `http://127.0.0.1:5000/api/calls/${call.id}`,
+                `/api/calls/${call.id}`,
                 {
                     method: "DELETE"
                 }
@@ -510,7 +709,9 @@ async function deleteAllCallHistory() {
         );
 
     } finally {
-        deleteCallHistoryBtn.disabled = false;
+        deleteCallHistoryBtn.disabled =
+            false;
+
         deleteCallHistoryBtn.textContent =
             "🗑 Διαγραφή ιστορικού";
     }
@@ -519,11 +720,12 @@ async function deleteAllCallHistory() {
 
 async function restoreDeletedCallHistory() {
     restoreCallHistoryBtn.disabled = true;
-    restoreCallHistoryBtn.textContent = "Επαναφορά...";
+    restoreCallHistoryBtn.textContent =
+        "Επαναφορά...";
 
     try {
         const response = await fetch(
-            "http://127.0.0.1:5000/api/calls?limit=200",
+            "/api/calls?limit=200",
             {
                 cache: "no-store"
             }
@@ -539,13 +741,14 @@ async function restoreDeletedCallHistory() {
             return;
         }
 
-        const deletedCalls = data.calls.filter(
-            call => call.deleted
-        );
+        const deletedCalls =
+            data.calls.filter(
+                call => call.deleted
+            );
 
         for (const call of deletedCalls) {
             await fetch(
-                `http://127.0.0.1:5000/api/calls/${call.id}/restore`,
+                `/api/calls/${call.id}/restore`,
                 {
                     method: "POST"
                 }
@@ -562,17 +765,98 @@ async function restoreDeletedCallHistory() {
         );
 
     } finally {
-        restoreCallHistoryBtn.disabled = false;
+        restoreCallHistoryBtn.disabled =
+            false;
+
         restoreCallHistoryBtn.textContent =
             "↩ Επαναφορά";
     }
 }
 
 
+/* =========================================================
+   ΗΜΕΡΟΜΗΝΙΑ ΚΑΙ ΩΡΑ
+========================================================= */
+
+function updateDateTime() {
+    const now = new Date();
+
+    const callDate =
+        document.getElementById(
+            "callDate"
+        );
+
+    const callTime =
+        document.getElementById(
+            "callTime"
+        );
+
+    if (callDate) {
+        callDate.textContent =
+            now.toLocaleDateString(
+                "el-GR"
+            );
+    }
+
+    if (callTime) {
+        callTime.textContent =
+            now.toLocaleTimeString(
+                "el-GR",
+                {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: false
+                }
+            );
+    }
+}
+
+
+/* =========================================================
+   EVENT LISTENERS
+========================================================= */
+
+if (searchBtn) {
+    searchBtn.addEventListener(
+        "click",
+        searchCustomer
+    );
+}
+
+
+if (saveCustomerBtn) {
+    saveCustomerBtn.addEventListener(
+        "click",
+        saveCustomer
+    );
+}
+
+
+if (phoneInput) {
+    phoneInput.addEventListener(
+        "keydown",
+        (event) => {
+            if (event.key === "Enter") {
+                searchCustomer();
+            }
+        }
+    );
+}
+
+
+if (newCustomerBtn) {
+    newCustomerBtn.addEventListener(
+        "click",
+        startNewCustomer
+    );
+}
+
+
 if (callHistoryList) {
     callHistoryList.addEventListener(
         "click",
-        event => {
+        (event) => {
             const deleteButton =
                 event.target.closest(
                     ".delete-single-call-btn"
@@ -585,7 +869,9 @@ if (callHistoryList) {
             const callId =
                 deleteButton.dataset.callId;
 
-            deleteSingleCall(callId);
+            deleteSingleCall(
+                callId
+            );
         }
     );
 }
@@ -607,9 +893,22 @@ if (restoreCallHistoryBtn) {
 }
 
 
+/* =========================================================
+   ΕΚΚΙΝΗΣΗ ΕΦΑΡΜΟΓΗΣ
+========================================================= */
+
 loadCallHistory();
 
 setInterval(
     loadCallHistory,
     5000
 );
+
+updateDateTime();
+
+setInterval(
+    updateDateTime,
+    1000
+);
+
+initializeIncomingCallWatcher();
