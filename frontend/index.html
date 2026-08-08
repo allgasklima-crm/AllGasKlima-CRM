@@ -203,39 +203,94 @@
                 </div>
             </div>
 
-            <div class="order-grid">
+            <div class="order-columns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 
-                <label class="order-option">
-                    <input type="checkbox">
-                    <span>Φιάλη 3 kg</span>
-                </label>
+    <!-- ΠΑΡΑΔΟΣΗ -->
+    <div class="order-column">
 
-                <label class="order-option">
-                    <input type="checkbox">
-                    <span>Φιάλη 10 kg μεταλλική</span>
-                </label>
+        <h3 style="font-size: 12px; margin: 0 0 12px 0;">
+            ΠΑΡΑΔΟΣΗ ΠΛΗΡΟΥΣ ΦΙΑΛΗΣ
+        </h3>
 
-                <label class="order-option">
-                    <input type="checkbox">
-                    <span>Φιάλη 10 kg πλαστική</span>
-                </label>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>3kg Μίγμα</span>
+            <input type="text"
+       id="delivery10kg"
+       value="0"
+       inputmode="numeric"
+       oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+       style="width: 60px; height: 38px; text-align: center;">
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>10kg Μίγμα</span>
+            <input type="text"
+       id="delivery10kg"
+       value="0"
+       inputmode="numeric"
+       oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+       style="width: 60px; height: 38px; text-align: center;">
+        </div>
 
-                <label class="order-option">
-                    <input type="checkbox">
-                    <span>Φιάλη 13 kg</span>
-                </label>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>10kg Προπάνιο</span>
+            <input type="text" id="delivery10kg" min="0" value="0"
+                   style="width: 60px; height: 38px; text-align: center;">
+        </div>
 
-                <label class="order-option">
-                    <input type="checkbox">
-                    <span>Φιάλη 25 kg</span>
-                </label>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>13kg Προπάνιο</span>
+            <input type="text" id="delivery13kg" min="0" value="0"
+                   style="width: 60px; height: 38px; text-align: center;">
+        </div>
 
-                <label class="order-option">
-                    <input type="checkbox">
-                    <span>Παραλαβή κενής φιάλης</span>
-                </label>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>25kg Προπάνιο</span>
+            <input type="text" id="delivery25kg" min="0" value="0"
+                   style="width: 60px; height: 38px; text-align: center;">
+        </div>
 
-            </div>
+    </div>
+
+
+    <!-- ΠΑΡΑΛΑΒΗ -->
+    <div class="order-column">
+
+        <h3 style="font-size: 12px; margin: 0 0 12px 0;">
+            ΠΑΡΑΛΑΒΗ ΑΠΟ ΠΕΛΑΤΗ
+        </h3>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>3kg</span>
+            <input type="number" id="return3kg" min="0" value="0"
+                   style="width: 60px; height: 38px; text-align: center;">
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>10kg</span>
+            <input type="number" id="return10kg" min="0" value="0"
+                   style="width: 60px; height: 38px; text-align: center;">
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>10kg</span>
+            <input type="number" id="return10kg" min="0" value="0"
+                   style="width: 60px; height: 38px; text-align: center;">
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>13kg</span>
+            <input type="number" id="return13kg" min="0" value="0"
+                   style="width: 60px; height: 38px; text-align: center;">
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>25kg</span>
+            <input type="number" id="return25kg" min="0" value="0"
+                   style="width: 60px; height: 38px; text-align: center;">
+        </div>
+
+    </div>
+
+</div>
 
             <div class="field-group order-notes">
                 <label for="orderNotes">Παρατηρήσεις παραγγελίας</label>
