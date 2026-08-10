@@ -1,4 +1,5 @@
 import time
+import re
 
 import requests
 from bs4 import BeautifulSoup
@@ -12,9 +13,9 @@ HOME_URL = (
     "?type=home"
 )
 
-CALL_DETAILS_URL = (
+PHONE_LINES_URL = (
     f"{ROUTER_BASE_URL}/cgi-bin/page.pl"
-    "?type=status&page=voice_cdr"
+    "?type=status&page=voice"
 )
 
 CRM_INCOMING_CALL_URL = (
@@ -22,11 +23,15 @@ CRM_INCOMING_CALL_URL = (
 )
 
 ROUTER_USERNAME = "user"
-
-# Βάλε εδώ τον πραγματικό κωδικό του router.
 ROUTER_PASSWORD = "MWNDAQ6W"
 
-CHECK_INTERVAL_SECONDS = 2
+BUSINESS_PHONE = "2310705109"
+
+CHECK_INTERVAL_SECONDS = 1
+
+
+def normalize_phone(value):
+    return re.sub(r"\D", "", value or "")
 
 
 def create_router_session():
@@ -60,9 +65,9 @@ def create_router_session():
     return session
 
 
-def get_latest_incoming_number(session):
+def get_ringing_call(session):
     response = session.get(
-        CALL_DETAILS_URL,
+        PHONE_LINES_URL,
         timeout=10
     )
 
@@ -73,60 +78,89 @@ def get_latest_incoming_number(session):
         "html.parser"
     )
 
-    page_text = soup.get_text(
-        " ",
-        strip=True
-    )
+    rows = soup.find_all("tr")
 
-    if "Call Details" not in page_text:
-        raise RuntimeError(
-            "Η σελίδα Call Details δεν φορτώθηκε σωστά."
+    header_found = False
+
+    for row in rows:
+        cells = row.find_all(
+            ["td", "th"],
+            recursive=False
         )
 
-    tables = soup.find_all("table")
+        values = [
+            cell.get_text(
+                " ",
+                strip=True
+            )
+            for cell in cells
+        ]
 
-    for table in tables:
-        table_text = table.get_text(
-            " ",
-            strip=True
-        )
+        if len(values) >= 6:
+            first_six = [
+                value.strip()
+                for value in values[:6]
+            ]
 
-        if (
-            "Last Numbers per Line" not in table_text
-            or "Incoming" not in table_text
+            if first_six == [
+                "Calling",
+                "Called",
+                "Peers",
+                "Codec",
+                "Status",
+                "Duration"
+            ]:
+                header_found = True
+                continue
+
+        if not header_found:
+            continue
+
+        if len(values) < 6:
+            continue
+
+        calling = values[0].strip()
+        called = values[1].strip()
+        peers = values[2].strip()
+        codec = values[3].strip()
+        status = values[4].strip()
+        duration = values[5].strip()
+
+        calling_digits = normalize_phone(calling)
+        called_digits = normalize_phone(called)
+        business_digits = normalize_phone(BUSINESS_PHONE)
+
+        if not calling_digits:
+            continue
+
+        if not called_digits.endswith(
+            business_digits
         ):
             continue
 
-        for row in table.find_all("tr"):
-            cells = row.find_all(
-                ["td", "th"]
-            )
+        if status.lower() != "ring":
+            continue
 
-            values = [
-                cell.get_text(
-                    " ",
-                    strip=True
-                )
-                for cell in cells
-            ]
+        if len(calling_digits) < 10:
+            continue
 
-            if (
-                len(values) >= 3
-                and values[0] == "Line 1"
-            ):
-                incoming_number = values[1].strip()
-
-                if incoming_number:
-                    return incoming_number
+        return {
+            "phone": calling_digits,
+            "called": called_digits,
+            "peers": peers,
+            "codec": codec,
+            "status": status,
+            "duration": duration
+        }
 
     return None
 
 
-def send_number_to_crm(incoming_number):
+def send_number_to_crm(phone):
     response = requests.post(
         CRM_INCOMING_CALL_URL,
         json={
-            "phone": incoming_number
+            "phone": phone
         },
         timeout=3
     )
@@ -135,7 +169,7 @@ def send_number_to_crm(incoming_number):
 
     print(
         "Ο αριθμός στάλθηκε στο CRM:",
-        incoming_number
+        phone
     )
 
 
@@ -145,38 +179,57 @@ def main():
     )
 
     session = None
-    last_number = None
+    active_ringing_phone = None
 
     while True:
         try:
             if session is None:
                 session = create_router_session()
 
-            incoming_number = (
-                get_latest_incoming_number(session)
+            ringing_call = get_ringing_call(
+                session
             )
 
-            if (
-                incoming_number
-                and incoming_number != last_number
-            ):
-                last_number = incoming_number
+            if ringing_call:
+                current_phone = ringing_call["phone"]
 
-                print(
-                    "Τελευταίος εισερχόμενος αριθμός:",
-                    incoming_number
-                )
+                if current_phone != active_ringing_phone:
+                    active_ringing_phone = current_phone
 
-                try:
-                    send_number_to_crm(
-                        incoming_number
-                    )
-
-                except requests.RequestException as crm_error:
                     print(
-                        "Δεν στάλθηκε ο αριθμός στο CRM:",
-                        crm_error
+                        "Νέα εισερχόμενη κλήση:",
+                        current_phone
                     )
+
+                    print(
+                        "Κατάσταση:",
+                        ringing_call["status"]
+                    )
+
+                    print(
+                        "Διάρκεια:",
+                        ringing_call["duration"]
+                    )
+
+                    try:
+                        send_number_to_crm(
+                            current_phone
+                        )
+
+                    except requests.RequestException as crm_error:
+                        print(
+                            "Δεν στάλθηκε ο αριθμός στο CRM:",
+                            crm_error
+                        )
+
+            else:
+                if active_ringing_phone is not None:
+                    print(
+                        "Η κλήση τερματίστηκε. "
+                        "Έτοιμο για την επόμενη."
+                    )
+
+                active_ringing_phone = None
 
         except requests.HTTPError as error:
             print(
