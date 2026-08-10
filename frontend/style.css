@@ -603,3 +603,22 @@ textarea:focus {
         grid-template-columns: 1fr;
     }
 }
+.customer-cylinder-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.customer-cylinder-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.customer-cylinder-row input[type="checkbox"] {
+    width: auto;
+    height: auto;
+    margin: 0;
+}

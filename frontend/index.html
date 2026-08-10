@@ -24,363 +24,810 @@
         </div>
     </header>
 
+
     <main class="crm-container">
+
+        <!-- =====================================================
+             ΕΙΣΕΡΧΟΜΕΝΗ ΚΛΗΣΗ
+        ====================================================== -->
 
         <section class="incoming-call-card">
 
             <div class="section-title-row">
+
                 <div>
-                    <span class="section-kicker">Ζωντανή αναγνώριση</span>
+                    <span class="section-kicker">
+                        ΖΩΝΤΑΝΗ ΑΝΑΓΝΩΡΙΣΗ
+                    </span>
+
                     <h2>📞 Εισερχόμενη κλήση</h2>
                 </div>
 
                 <div class="call-time-box">
+
                     <span>Ημερομηνία</span>
                     <strong id="callDate">--/--/----</strong>
 
                     <span>Ώρα</span>
                     <strong id="callTime">--:--:--</strong>
+
                 </div>
+
             </div>
+
 
             <div class="call-search-row">
 
                 <div class="field-group phone-search-field">
-                    <label for="phone">Αριθμός τηλεφώνου</label>
+
+                    <label for="phone">
+                        Αριθμός τηλεφώνου
+                    </label>
 
                     <input
                         type="text"
                         id="phone"
                         placeholder="Πληκτρολόγησε ή περίμενε εισερχόμενη κλήση"
+                        autocomplete="off"
                     >
+
                 </div>
 
-                <button id="searchBtn" class="btn btn-primary">
+
+                <button
+                    type="button"
+                    id="searchBtn"
+                    class="btn btn-primary"
+                >
                     Αναζήτηση
                 </button>
 
-                <button type="button" class="btn btn-secondary">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                >
                     Κλήση πελάτη
                 </button>
 
             </div>
 
-            <div id="result" class="result-area"></div>
+
+            <div
+                id="result"
+                class="result-area"
+            ></div>
 
         </section>
+
+
+        <!-- =====================================================
+             ΚΥΡΙΟ ΠΛΕΓΜΑ
+        ====================================================== -->
 
         <section class="main-grid">
 
-    <div class="left-column">
 
-        <section class="panel">
+            <!-- =================================================
+                 ΑΡΙΣΤΕΡΗ ΣΤΗΛΗ
+            ================================================== -->
 
-            <div class="panel-heading">
-                <div>
-                    <span class="section-kicker">Καρτέλα πελάτη</span>
-                    <h2>Στοιχεία πελάτη</h2>
-                </div>
+            <div class="left-column">
 
-                <button
-    type="button"
-    id="newCustomerBtn"
-    class="customer-status"
->
-    Νέος πελάτης
-</button>
-            </div>
+                <section class="panel">
 
-            <div id="newCustomerForm" class="customer-form">
+                    <div class="panel-heading">
 
-                <div class="form-grid">
+                        <div>
+                            <span class="section-kicker">
+                                ΚΑΡΤΕΛΑ ΠΕΛΑΤΗ
+                            </span>
 
-                    <div class="field-group full-width">
-                        <label for="fullname">Ονοματεπώνυμο</label>
-                        <input
-                            type="text"
-                            id="fullname"
-                            placeholder="Ονοματεπώνυμο πελάτη"
-                        >
-                    </div>
+                            <h2>Στοιχεία πελάτη</h2>
+                        </div>
 
-                    <div class="field-group">
-                        <label for="phone1">Κύριο τηλέφωνο</label>
-                        <input
-                            type="text"
-                            id="phone1"
-                            placeholder="Κύριο τηλέφωνο"
-                        >
-                    </div>
-
-                    <div class="field-group">
-                        <label for="phone2">Δεύτερο τηλέφωνο</label>
-                        <input
-                            type="text"
-                            id="phone2"
-                            placeholder="Δεύτερο τηλέφωνο"
-                        >
-                    </div>
-
-                    <div class="field-group">
-                        <label for="phone3">Τρίτο τηλέφωνο</label>
-                        <input
-                            type="text"
-                            id="phone3"
-                            placeholder="Τρίτο τηλέφωνο"
-                        >
-                    </div>
-
-                    <div class="field-group">
-                        <label for="area">Περιοχή</label>
-                        <input
-                            type="text"
-                            id="area"
-                            placeholder="Περιοχή"
-                        >
-                    </div>
-
-                    <div class="field-group full-width">
-                        <label for="address">Διεύθυνση</label>
-                        <input
-                            type="text"
-                            id="address"
-                            placeholder="Οδός και αριθμός"
-                        >
-                    </div>
-
-                    <div class="field-group">
-                        <label for="floor">Όροφος</label>
-                        <input
-                            type="text"
-                            id="floor"
-                            placeholder="Όροφος"
-                        >
-                    </div>
-
-                    <div class="field-group">
-                        <label>Χάρτης</label>
 
                         <button
                             type="button"
-                            class="btn btn-map"
+                            id="newCustomerBtn"
+                            class="customer-status"
                         >
-                            📍 Άνοιγμα Google Maps
+                            Νέος πελάτης
                         </button>
+
                     </div>
 
-                </div>
 
-                <div class="field-group notes-field">
-                    <label for="notes">Παρατηρήσεις πελάτη</label>
+                    <div
+                        id="newCustomerForm"
+                        class="customer-form"
+                    >
+
+                        <div class="form-grid">
+
+
+                            <!-- ΟΝΟΜΑΤΕΠΩΝΥΜΟ -->
+
+                            <div class="field-group full-width">
+
+                                <label for="fullname">
+                                    Ονοματεπώνυμο
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="fullname"
+                                    placeholder="Ονοματεπώνυμο πελάτη"
+                                >
+
+                            </div>
+
+
+                            <!-- ΚΥΡΙΟ ΤΗΛΕΦΩΝΟ -->
+
+                            <div class="field-group">
+
+                                <label for="phone1">
+                                    Κύριο τηλέφωνο
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="phone1"
+                                    placeholder="Κύριο τηλέφωνο"
+                                >
+
+                            </div>
+
+
+                            <!-- ΔΕΥΤΕΡΟ ΤΗΛΕΦΩΝΟ -->
+
+                            <div class="field-group">
+
+                                <label for="phone2">
+                                    Δεύτερο τηλέφωνο
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="phone2"
+                                    placeholder="Δεύτερο τηλέφωνο"
+                                >
+
+                            </div>
+
+
+                            <!-- ΤΡΙΤΟ ΤΗΛΕΦΩΝΟ -->
+
+                            <div class="field-group">
+
+                                <label for="phone3">
+                                    Τρίτο τηλέφωνο
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="phone3"
+                                    placeholder="Τρίτο τηλέφωνο"
+                                >
+
+                            </div>
+
+
+                            <!-- ΠΕΡΙΟΧΗ -->
+
+                            <div class="field-group">
+
+                                <label for="area">
+                                    Περιοχή
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="area"
+                                    placeholder="Περιοχή"
+                                >
+
+                            </div>
+
+
+                            <!-- ΔΙΕΥΘΥΝΣΗ -->
+
+                            <div class="field-group full-width">
+
+                                <label for="address">
+                                    Διεύθυνση
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="address"
+                                    placeholder="Οδός και αριθμός"
+                                >
+
+                            </div>
+
+
+                            <!-- ΟΡΟΦΟΣ -->
+
+                            <div class="field-group">
+
+                                <label for="floor">
+                                    Όροφος
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="floor"
+                                    placeholder="Όροφος"
+                                >
+
+                            </div>
+
+
+                            <!-- ΧΑΡΤΗΣ -->
+
+                            <div class="field-group">
+
+                                <label>
+                                    Χάρτης
+                                </label>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-map"
+                                >
+                                    📍 Άνοιγμα Google Maps
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             ΠΑΡΑΤΗΡΗΣΕΙΣ ΠΕΛΑΤΗ
+                        ================================================== -->
+
+                        <div class="field-group notes-field">
+
+                            <label for="notes">
+                                Παρατηρήσεις πελάτη
+                            </label>
+
+                            <textarea
+                                id="notes"
+                                placeholder="Σημαντικές πληροφορίες για τον πελάτη, την πρόσβαση ή την παράδοση"
+                            ></textarea>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             ΦΙΑΛΕΣ ΠΟΥ ΧΡΗΣΙΜΟΠΟΙΕΙ Ο ΠΕΛΑΤΗΣ
+                        ================================================== -->
+
+                        <div class="customer-cylinder-section">
+
+                            <h3>
+                                Φιάλες που χρησιμοποιεί ο πελάτης
+                            </h3>
+
+
+                            <!-- ΤΥΠΟΣ ΣΥΝΔΕΣΗΣ -->
+
+                            <div class="customer-cylinder-row">
+
+                                <strong>
+                                    Τύπος σύνδεσης:
+                                </strong>
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="cylinderScrew"
+                                    >
+                                    Βιδωτή
+                                </label>
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="cylinderClip"
+                                    >
+                                    Κουμπωτή
+                                </label>
+
+                            </div>
+
+
+                            <!-- ΕΙΔΟΣ ΦΙΑΛΗΣ -->
+
+                            <div class="customer-cylinder-row">
+
+                                <strong>
+                                    Είδος φιάλης:
+                                </strong>
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="cylinder3kg"
+                                    >
+                                    3kg
+                                </label>
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="cylinder10Mix"
+                                    >
+                                    10kg Μίγμα
+                                </label>
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="cylinder10Propane"
+                                    >
+                                    10kg Προπάνιο
+                                </label>
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="cylinder13kg"
+                                    >
+                                    13kg
+                                </label>
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="cylinder25kg"
+                                    >
+                                    25kg
+                                </label>
+
+                            </div>
+
+
+                            <!-- ΣΧΗΜΑ 10KG -->
+
+                            <div class="customer-cylinder-row">
+
+                                <strong>
+                                    Σχήμα 10kg:
+                                </strong>
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="cylinderBarrel"
+                                    >
+                                    Βαρελάκι
+                                </label>
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="cylinderShort"
+                                    >
+                                    Κοντή
+                                </label>
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="cylinderTall"
+                                    >
+                                    Ψηλή
+                                </label>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ
+                        ================================================== -->
+
+                        <button
+                            type="button"
+                            id="saveCustomerBtn"
+                            class="btn btn-primary btn-full"
+                        >
+                            Αποθήκευση πελάτη
+                        </button>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- =================================================
+                 ΔΕΞΙΑ ΣΤΗΛΗ
+            ================================================== -->
+
+            <aside class="right-column">
+
+
+                <!-- =================================================
+                     ΠΑΡΑΓΓΕΛΙΑ ΦΙΑΛΩΝ
+                ================================================== -->
+
+                <section class="panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+                            <span class="section-kicker">
+                                ΝΕΑ ΚΑΤΑΧΩΡΗΣΗ
+                            </span>
+
+                            <h2>
+                                Παραγγελία φιαλών
+                            </h2>
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="order-columns"
+                        style="
+                            display:grid;
+                            grid-template-columns:1fr 1fr;
+                            gap:20px;
+                        "
+                    >
+
+
+                        <!-- =========================================
+                             ΠΑΡΑΔΟΣΗ ΠΛΗΡΟΥΣ ΦΙΑΛΗΣ
+                        ========================================== -->
+
+                        <div class="order-column">
+
+                            <h3
+                                style="
+                                    font-size:12px;
+                                    margin:0 0 12px 0;
+                                "
+                            >
+                                ΠΑΡΑΔΟΣΗ ΠΛΗΡΟΥΣ ΦΙΑΛΗΣ
+                            </h3>
+
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+
+                                <span>3kg Μίγμα</span>
+
+                                <input
+                                    type="text"
+                                    id="delivery3kg"
+                                    value="0"
+                                    inputmode="numeric"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    style="width:60px; height:38px; text-align:center;"
+                                >
+
+                            </div>
+
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+
+                                <span>10kg Μίγμα</span>
+
+                                <input
+                                    type="text"
+                                    id="delivery10kgMix"
+                                    value="0"
+                                    inputmode="numeric"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    style="width:60px; height:38px; text-align:center;"
+                                >
+
+                            </div>
+
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+
+                                <span>10kg Προπάνιο</span>
+
+                                <input
+                                    type="text"
+                                    id="delivery10kgPropane"
+                                    value="0"
+                                    inputmode="numeric"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    style="width:60px; height:38px; text-align:center;"
+                                >
+
+                            </div>
+
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+
+                                <span>13kg Προπάνιο</span>
+
+                                <input
+                                    type="text"
+                                    id="delivery13kg"
+                                    value="0"
+                                    inputmode="numeric"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    style="width:60px; height:38px; text-align:center;"
+                                >
+
+                            </div>
+
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+
+                                <span>25kg Προπάνιο</span>
+
+                                <input
+                                    type="text"
+                                    id="delivery25kg"
+                                    value="0"
+                                    inputmode="numeric"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    style="width:60px; height:38px; text-align:center;"
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =========================================
+                             ΠΑΡΑΛΑΒΗ ΑΠΟ ΠΕΛΑΤΗ
+                        ========================================== -->
+
+                        <div class="order-column">
+
+                            <h3
+                                style="
+                                    font-size:12px;
+                                    margin:0 0 12px 0;
+                                "
+                            >
+                                ΠΑΡΑΛΑΒΗ ΑΠΟ ΠΕΛΑΤΗ
+                            </h3>
+
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+
+                                <span>3kg</span>
+
+                                <input
+                                    type="text"
+                                    id="return3kg"
+                                    value="0"
+                                    inputmode="numeric"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    style="width:60px; height:38px; text-align:center;"
+                                >
+
+                            </div>
+
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+
+                                <span>10kg Μίγμα</span>
+
+                                <input
+                                    type="text"
+                                    id="return10kgMix"
+                                    value="0"
+                                    inputmode="numeric"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    style="width:60px; height:38px; text-align:center;"
+                                >
+
+                            </div>
+
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+
+                                <span>10kg Προπάνιο</span>
+
+                                <input
+                                    type="text"
+                                    id="return10kgPropane"
+                                    value="0"
+                                    inputmode="numeric"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    style="width:60px; height:38px; text-align:center;"
+                                >
+
+                            </div>
+
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+
+                                <span>13kg</span>
+
+                                <input
+                                    type="text"
+                                    id="return13kg"
+                                    value="0"
+                                    inputmode="numeric"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    style="width:60px; height:38px; text-align:center;"
+                                >
+
+                            </div>
+
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+
+                                <span>25kg</span>
+
+                                <input
+                                    type="text"
+                                    id="return25kg"
+                                    value="0"
+                                    inputmode="numeric"
+                                    oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                    style="width:60px; height:38px; text-align:center;"
+                                >
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         ΠΑΡΑΤΗΡΗΣΕΙΣ ΠΑΡΑΓΓΕΛΙΑΣ
+                    ================================================== -->
+
+                    <div class="field-group order-notes">
+
+                        <label for="orderNotes">
+                            Παρατηρήσεις παραγγελίας
+                        </label>
+
+                        <textarea
+                            id="orderNotes"
+                            placeholder="Ώρα παράδοσης, τρόπος πληρωμής, κουδούνι, πρόσθετα προϊόντα ή άλλες οδηγίες"
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         ΚΟΥΜΠΙΑ ΠΑΡΑΓΓΕΛΙΑΣ
+                    ================================================== -->
+
+                    <div class="action-row">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                        >
+                            Αποθήκευση παραγγελίας
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-success"
+                        >
+                            Αποστολή στον οδηγό
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     ΣΗΜΑΝΤΙΚΕΣ ΟΔΗΓΙΕΣ
+                ================================================== -->
+
+                <section class="panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+                            <span class="section-kicker">
+                                ΣΗΜΑΝΤΙΚΕΣ ΟΔΗΓΙΕΣ
+                            </span>
+
+                            <h2>
+                                Παρατηρήσεις
+                            </h2>
+                        </div>
+
+                    </div>
+
 
                     <textarea
-                        id="notes"
-                        placeholder="Σημαντικές πληροφορίες για τον πελάτη, την πρόσβαση ή την παράδοση"
+                        class="large-notes"
+                        placeholder="Γράψε εδώ οτιδήποτε πρέπει να γνωρίζει το τηλεφωνικό κέντρο ή ο οδηγός"
                     ></textarea>
-                </div>
 
-                <button
-                    id="saveCustomerBtn"
-                    class="btn btn-primary btn-full"
-                >
-                    Αποθήκευση πελάτη
-                </button>
+                </section>
 
-            </div>
+            </aside>
 
         </section>
 
-    </div>
 
-    <aside class="right-column">
+        <!-- =====================================================
+             ΙΣΤΟΡΙΚΟ ΚΛΗΣΕΩΝ
+        ====================================================== -->
 
-        <section class="panel">
+        <section class="panel history-panel full-history-panel">
 
             <div class="panel-heading">
+
                 <div>
-                    <span class="section-kicker">Νέα καταχώριση</span>
-                    <h2>Παραγγελία φιαλών</h2>
+                    <span class="section-kicker">
+                        ΠΡΟΗΓΟΥΜΕΝΕΣ ΚΙΝΗΣΕΙΣ
+                    </span>
+
+                    <h2>
+                        Ιστορικό κλήσεων
+                    </h2>
                 </div>
+
+
+                <div class="history-actions">
+
+                    <button
+                        type="button"
+                        id="deleteCallHistoryBtn"
+                        class="btn btn-danger"
+                    >
+                        🗑 Διαγραφή ιστορικού
+                    </button>
+
+
+                    <button
+                        type="button"
+                        id="restoreCallHistoryBtn"
+                        class="btn btn-secondary"
+                        style="display:none;"
+                    >
+                        ↩ Επαναφορά
+                    </button>
+
+                </div>
+
             </div>
 
-            <div class="order-columns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 
-    <!-- ΠΑΡΑΔΟΣΗ -->
-    <div class="order-column">
+            <div
+                id="callHistoryList"
+                class="call-history-list"
+            >
 
-        <h3 style="font-size: 12px; margin: 0 0 12px 0;">
-            ΠΑΡΑΔΟΣΗ ΠΛΗΡΟΥΣ ΦΙΑΛΗΣ
-        </h3>
+                <div class="empty-state">
 
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span>3kg Μίγμα</span>
-            <input type="text"
-       id="delivery10kg"
-       value="0"
-       inputmode="numeric"
-       oninput="this.value=this.value.replace(/[^0-9]/g,'')"
-       style="width: 60px; height: 38px; text-align: center;">
-        </div>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span>10kg Μίγμα</span>
-            <input type="text"
-       id="delivery10kg"
-       value="0"
-       inputmode="numeric"
-       oninput="this.value=this.value.replace(/[^0-9]/g,'')"
-       style="width: 60px; height: 38px; text-align: center;">
-        </div>
+                    <span>📋</span>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span>10kg Προπάνιο</span>
-            <input type="text" id="delivery10kg" min="0" value="0"
-                   style="width: 60px; height: 38px; text-align: center;">
-        </div>
+                    <p>
+                        Δεν υπάρχουν ακόμη κλήσεις.
+                    </p>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span>13kg Προπάνιο</span>
-            <input type="text" id="delivery13kg" min="0" value="0"
-                   style="width: 60px; height: 38px; text-align: center;">
-        </div>
-
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span>25kg Προπάνιο</span>
-            <input type="text" id="delivery25kg" min="0" value="0"
-                   style="width: 60px; height: 38px; text-align: center;">
-        </div>
-
-    </div>
-
-
-    <!-- ΠΑΡΑΛΑΒΗ -->
-    <div class="order-column">
-
-        <h3 style="font-size: 12px; margin: 0 0 12px 0;">
-            ΠΑΡΑΛΑΒΗ ΑΠΟ ΠΕΛΑΤΗ
-        </h3>
-
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span>3kg</span>
-            <input type="number" id="return3kg" min="0" value="0"
-                   style="width: 60px; height: 38px; text-align: center;">
-        </div>
-
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span>10kg</span>
-            <input type="number" id="return10kg" min="0" value="0"
-                   style="width: 60px; height: 38px; text-align: center;">
-        </div>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span>10kg</span>
-            <input type="number" id="return10kg" min="0" value="0"
-                   style="width: 60px; height: 38px; text-align: center;">
-        </div>
-
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span>13kg</span>
-            <input type="number" id="return13kg" min="0" value="0"
-                   style="width: 60px; height: 38px; text-align: center;">
-        </div>
-
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span>25kg</span>
-            <input type="number" id="return25kg" min="0" value="0"
-                   style="width: 60px; height: 38px; text-align: center;">
-        </div>
-
-    </div>
-
-</div>
-
-            <div class="field-group order-notes">
-                <label for="orderNotes">Παρατηρήσεις παραγγελίας</label>
-
-                <textarea
-                    id="orderNotes"
-                    placeholder="Ώρα παράδοσης, τρόπος πληρωμής, κουδούνι, πρόσθετα προϊόντα ή άλλες οδηγίες"
-                ></textarea>
-            </div>
-
-            <div class="action-row">
-
-                <button type="button" class="btn btn-secondary">
-                    Αποθήκευση παραγγελίας
-                </button>
-
-                <button type="button" class="btn btn-success">
-                    Αποστολή στον οδηγό
-                </button>
+                </div>
 
             </div>
 
         </section>
 
-        <section class="panel">
 
-            <div class="panel-heading">
-                <div>
-                    <span class="section-kicker">Σημαντικές οδηγίες</span>
-                    <h2>Παρατηρήσεις</h2>
-                </div>
-            </div>
+        <!-- =====================================================
+             ΗΜΕΡΗΣΙΑ ΣΥΝΟΨΗ
+        ====================================================== -->
 
-            <textarea
-                class="large-notes"
-                placeholder="Γράψε εδώ οτιδήποτε πρέπει να γνωρίζει το τηλεφωνικό κέντρο ή ο οδηγός"
-            ></textarea>
-
-        </section>
-
-    </aside>
-
-</section>
-
-<section class="panel history-panel full-history-panel">
-
-    <div class="panel-heading">
-
-        <div>
-            <span class="section-kicker">Προηγούμενες κινήσεις</span>
-            <h2>Ιστορικό κλήσεων</h2>
-        </div>
-
-        <div class="history-actions">
-
-            <button
-                id="deleteCallHistoryBtn"
-                class="btn btn-danger"
-            >
-                🗑 Διαγραφή ιστορικού
-            </button>
-
-            <button
-                id="restoreCallHistoryBtn"
-                class="btn btn-secondary"
-                style="display:none"
-            >
-                ↩ Επαναφορά
-            </button>
-
-        </div>
-
-    </div>
-
-    <div
-        id="callHistoryList"
-        class="call-history-list"
-    >
-
-        <div class="empty-state">
-
-            <span>📋</span>
-
-            <p>Δεν υπάρχουν ακόμη κλήσεις.</p>
-
-        </div>
-
-    </div>
-
-</section>
         <section class="daily-summary">
 
             <div class="summary-card">
@@ -406,6 +853,7 @@
         </section>
 
     </main>
+
 
     <script src="script.js"></script>
 

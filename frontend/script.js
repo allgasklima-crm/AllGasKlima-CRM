@@ -32,6 +32,36 @@ const floorInput =
 const notesInput =
     document.getElementById("notes");
 
+const cylinderScrew =
+    document.getElementById("cylinderScrew");
+
+const cylinderClip =
+    document.getElementById("cylinderClip");
+
+const cylinder3kg =
+    document.getElementById("cylinder3kg");
+
+const cylinder10Mix =
+    document.getElementById("cylinder10Mix");
+
+const cylinder10Propane =
+    document.getElementById("cylinder10Propane");
+
+const cylinder13kg =
+    document.getElementById("cylinder13kg");
+
+const cylinder25kg =
+    document.getElementById("cylinder25kg");
+
+const cylinderBarrel =
+    document.getElementById("cylinderBarrel");
+
+const cylinderShort =
+    document.getElementById("cylinderShort");
+
+const cylinderTall =
+    document.getElementById("cylinderTall");
+
 const saveCustomerBtn =
     document.getElementById("saveCustomerBtn");
 
@@ -44,9 +74,10 @@ const deleteCallHistoryBtn =
 const restoreCallHistoryBtn =
     document.getElementById("restoreCallHistoryBtn");
 
-
 let lastIncomingCallId = null;
 let incomingCallCheckRunning = false;
+
+let currentCustomerId = null;
 
 
 /* =========================================================
@@ -62,10 +93,32 @@ function clearCustomerForm() {
     addressInput.value = "";
     floorInput.value = "";
     notesInput.value = "";
+
+    [
+        cylinderScrew,
+        cylinderClip,
+        cylinder3kg,
+        cylinder10Mix,
+        cylinder10Propane,
+        cylinder13kg,
+        cylinder25kg,
+        cylinderBarrel,
+        cylinderShort,
+        cylinderTall
+    ].forEach((checkbox) => {
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+    });
+
+    currentCustomerId = null;
 }
 
 
 function fillCustomerForm(customer) {
+    currentCustomerId =
+        customer.id ?? null;
+
     fullnameInput.value =
         customer.fullname || "";
 
@@ -89,14 +142,62 @@ function fillCustomerForm(customer) {
 
     notesInput.value =
         customer.notes || "";
+
+    if (cylinderScrew) {
+        cylinderScrew.checked =
+            Boolean(customer.cylinder_screw);
+    }
+
+    if (cylinderClip) {
+        cylinderClip.checked =
+            Boolean(customer.cylinder_clip);
+    }
+
+    if (cylinder3kg) {
+        cylinder3kg.checked =
+            Boolean(customer.cylinder_3kg);
+    }
+
+    if (cylinder10Mix) {
+        cylinder10Mix.checked =
+            Boolean(customer.cylinder_10_mix);
+    }
+
+    if (cylinder10Propane) {
+        cylinder10Propane.checked =
+            Boolean(customer.cylinder_10_propane);
+    }
+
+    if (cylinder13kg) {
+        cylinder13kg.checked =
+            Boolean(customer.cylinder_13kg);
+    }
+
+    if (cylinder25kg) {
+        cylinder25kg.checked =
+            Boolean(customer.cylinder_25kg);
+    }
+
+    if (cylinderBarrel) {
+        cylinderBarrel.checked =
+            Boolean(customer.cylinder_barrel);
+    }
+
+    if (cylinderShort) {
+        cylinderShort.checked =
+            Boolean(customer.cylinder_short);
+    }
+
+    if (cylinderTall) {
+        cylinderTall.checked =
+            Boolean(customer.cylinder_tall);
+    }
 }
 
 
 function isProbablyPhone(value) {
-    const cleanedValue = value.replace(
-        /[\s()+-]/g,
-        ""
-    );
+    const cleanedValue =
+        value.replace(/[\s()+-]/g, "");
 
     return /^\d+$/.test(cleanedValue);
 }
@@ -114,7 +215,6 @@ function escapeHtml(value) {
 
 /* =========================================================
    ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ
-   Το επάνω πεδίο δέχεται όνομα, επώνυμο ή τηλέφωνο.
 ========================================================= */
 
 async function searchCustomer() {
@@ -128,17 +228,10 @@ async function searchCustomer() {
         return;
     }
 
-    result.innerHTML = "Αναζήτηση...";
+    result.innerHTML =
+        "Αναζήτηση...";
 
     try {
-        /*
-         * Κρατάμε το όνομα του query parameter ως "phone"
-         * για να είναι συμβατό με το υπάρχον app.py.
-         *
-         * Το app.py πρέπει να ψάχνει αυτό το κείμενο:
-         * - στα phone1, phone2, phone3
-         * - και στο fullname
-         */
         const response = await fetch(
             "/api/customer?phone=" +
             encodeURIComponent(searchText),
@@ -147,9 +240,13 @@ async function searchCustomer() {
             }
         );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
-        if (!response.ok || !data.success) {
+        if (
+            !response.ok ||
+            !data.success
+        ) {
             result.innerHTML =
                 data.message ||
                 "Παρουσιάστηκε σφάλμα στην αναζήτηση.";
@@ -163,23 +260,23 @@ async function searchCustomer() {
             result.innerHTML = `
                 <div class="incoming-call-message">
                     Δεν βρέθηκε πελάτης με:
-                    <strong>${escapeHtml(searchText)}</strong>
+                    <strong>
+                        ${escapeHtml(searchText)}
+                    </strong>
                 </div>
             `;
 
-            /*
-             * Αν γράφτηκε αριθμός, τον βάζουμε στο κύριο τηλέφωνο.
-             * Αν γράφτηκε όνομα, το βάζουμε στο ονοματεπώνυμο.
-             */
             if (isProbablyPhone(searchText)) {
-                phone1Input.value = searchText;
+                phone1Input.value =
+                    searchText;
             } else {
-                fullnameInput.value = searchText;
+                fullnameInput.value =
+                    searchText;
             }
 
-            newCustomerForm.classList.remove(
-                "hidden"
-            );
+            newCustomerForm
+                .classList
+                .remove("hidden");
 
             if (isProbablyPhone(searchText)) {
                 fullnameInput.focus();
@@ -190,17 +287,21 @@ async function searchCustomer() {
             return;
         }
 
-        fillCustomerForm(data.customer);
-
-        newCustomerForm.classList.remove(
-            "hidden"
+        fillCustomerForm(
+            data.customer
         );
+
+        newCustomerForm
+            .classList
+            .remove("hidden");
 
         result.innerHTML = `
             <div class="success-message">
                 Βρέθηκε ο πελάτης:
                 <strong>
-                    ${escapeHtml(data.customer.fullname)}
+                    ${escapeHtml(
+                        data.customer.fullname
+                    )}
                 </strong>
             </div>
         `;
@@ -223,38 +324,91 @@ async function searchCustomer() {
 
 
 /* =========================================================
-   ΑΠΟΘΗΚΕΥΣΗ ΠΕΛΑΤΗ
+   ΑΠΟΘΗΚΕΥΣΗ / ΕΝΗΜΕΡΩΣΗ ΠΕΛΑΤΗ
 ========================================================= */
 
 async function saveCustomer() {
     const customerData = {
-        fullname: fullnameInput.value.trim(),
-        phone1: phone1Input.value.trim(),
-        phone2: phone2Input.value.trim(),
-        phone3: phone3Input.value.trim(),
-        area: areaInput.value.trim(),
-        address: addressInput.value.trim(),
-        floor: floorInput.value.trim(),
-        notes: notesInput.value.trim()
+        fullname:
+            fullnameInput.value.trim(),
+
+        phone1:
+            phone1Input.value.trim(),
+
+        phone2:
+            phone2Input.value.trim(),
+
+        phone3:
+            phone3Input.value.trim(),
+
+        area:
+            areaInput.value.trim(),
+
+        address:
+            addressInput.value.trim(),
+
+        floor:
+            floorInput.value.trim(),
+
+        notes:
+            notesInput.value.trim(),
+
+        cylinder_screw:
+            cylinderScrew?.checked || false,
+
+        cylinder_clip:
+            cylinderClip?.checked || false,
+
+        cylinder_3kg:
+            cylinder3kg?.checked || false,
+
+        cylinder_10_mix:
+            cylinder10Mix?.checked || false,
+
+        cylinder_10_propane:
+            cylinder10Propane?.checked || false,
+
+        cylinder_13kg:
+            cylinder13kg?.checked || false,
+
+        cylinder_25kg:
+            cylinder25kg?.checked || false,
+
+        cylinder_barrel:
+            cylinderBarrel?.checked || false,
+
+        cylinder_short:
+            cylinderShort?.checked || false,
+
+        cylinder_tall:
+            cylinderTall?.checked || false
     };
 
-    if (customerData.fullname === "") {
+    if (
+        customerData.fullname === ""
+    ) {
         result.innerHTML =
             "Το ονοματεπώνυμο είναι υποχρεωτικό.";
 
         fullnameInput.focus();
+
         return;
     }
 
-    if (customerData.phone1 === "") {
+    if (
+        customerData.phone1 === ""
+    ) {
         result.innerHTML =
             "Το κύριο τηλέφωνο είναι υποχρεωτικό.";
 
         phone1Input.focus();
+
         return;
     }
 
-    saveCustomerBtn.disabled = true;
+    saveCustomerBtn.disabled =
+        true;
+
     saveCustomerBtn.textContent =
         "Αποθήκευση...";
 
@@ -262,23 +416,44 @@ async function saveCustomer() {
         "Γίνεται αποθήκευση...";
 
     try {
-        const response = await fetch(
-            "/api/customer",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-                body: JSON.stringify(
-                    customerData
-                )
-            }
-        );
+        const isExistingCustomer =
+            currentCustomerId !== null;
 
-        const data = await response.json();
+        const url =
+            isExistingCustomer
+                ? `/api/customer/${currentCustomerId}`
+                : "/api/customer";
 
-        if (!response.ok || !data.success) {
+        const method =
+            isExistingCustomer
+                ? "PUT"
+                : "POST";
+
+        const response =
+            await fetch(
+                url,
+                {
+                    method: method,
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(
+                            customerData
+                        )
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
             result.innerHTML =
                 data.message ||
                 "Δεν έγινε η αποθήκευση.";
@@ -286,15 +461,31 @@ async function saveCustomer() {
             return;
         }
 
+        if (
+            data.customer &&
+            data.customer.id
+        ) {
+            currentCustomerId =
+                data.customer.id;
+        }
+
         phoneInput.value =
-            data.customer.phone1 ||
+            data.customer?.phone1 ||
             customerData.phone1;
 
-        fillCustomerForm(data.customer);
+        if (data.customer) {
+            fillCustomerForm(
+                data.customer
+            );
+        }
 
         result.innerHTML = `
             <div class="success-message">
-                Ο πελάτης αποθηκεύτηκε επιτυχώς.
+                ${
+                    isExistingCustomer
+                        ? "Τα στοιχεία του πελάτη ενημερώθηκαν επιτυχώς."
+                        : "Ο πελάτης αποθηκεύτηκε επιτυχώς."
+                }
             </div>
         `;
 
@@ -308,7 +499,9 @@ async function saveCustomer() {
             "Δεν υπάρχει σύνδεση με τον server.";
 
     } finally {
-        saveCustomerBtn.disabled = false;
+        saveCustomerBtn.disabled =
+            false;
+
         saveCustomerBtn.textContent =
             "Αποθήκευση πελάτη";
     }
@@ -320,30 +513,21 @@ async function saveCustomer() {
 ========================================================= */
 
 function startNewCustomer() {
-    /*
-     * Καθαρίζει την επάνω αναζήτηση και όλα τα στοιχεία.
-     * Δεν αλλάζει το lastIncomingCallId.
-     * Έτσι η προηγούμενη κλήση δεν εμφανίζεται ξανά.
-     */
+    currentCustomerId = null;
+
     phoneInput.value = "";
     result.innerHTML = "";
 
     clearCustomerForm();
 
-    /*
-     * Ξετικάρει όλες τις φιάλες και την παραλαβή κενής.
-     */
     document
         .querySelectorAll(
-            '.order-option input[type="checkbox"]'
+            '.customer-cylinder-section input[type="checkbox"], .order-option input[type="checkbox"]'
         )
         .forEach((checkbox) => {
             checkbox.checked = false;
         });
 
-    /*
-     * Καθαρίζει τις παρατηρήσεις παραγγελίας.
-     */
     const orderNotesInput =
         document.getElementById(
             "orderNotes"
@@ -353,9 +537,6 @@ function startNewCustomer() {
         orderNotesInput.value = "";
     }
 
-    /*
-     * Καθαρίζει τις σημαντικές οδηγίες δεξιά.
-     */
     const importantNotesInput =
         document.querySelector(
             ".large-notes"
@@ -365,9 +546,9 @@ function startNewCustomer() {
         importantNotesInput.value = "";
     }
 
-    newCustomerForm.classList.remove(
-        "hidden"
-    );
+    newCustomerForm
+        .classList
+        .remove("hidden");
 
     fullnameInput.focus();
 
@@ -376,8 +557,6 @@ function startNewCustomer() {
         behavior: "smooth"
     });
 }
-
-
 /* =========================================================
    ΑΝΑΓΝΩΡΙΣΗ ΕΙΣΕΡΧΟΜΕΝΗΣ ΚΛΗΣΗΣ
 ========================================================= */
@@ -408,10 +587,6 @@ async function checkIncomingCall() {
             return;
         }
 
-        /*
-         * Αν είναι η ίδια κλήση που έχουμε ήδη επεξεργαστεί,
-         * δεν ξαναγεμίζουμε τα πεδία.
-         */
         if (
             data.call.id ===
             lastIncomingCallId
@@ -419,18 +594,15 @@ async function checkIncomingCall() {
             return;
         }
 
-        const incomingPhone = String(
-            data.call.phone || ""
-        ).trim();
+        const incomingPhone =
+            String(
+                data.call.phone || ""
+            ).trim();
 
         if (incomingPhone === "") {
             return;
         }
 
-        /*
-         * Σημειώνουμε πρώτα το ID ως επεξεργασμένο.
-         * Έτσι δεν επαναλαμβάνεται η ίδια κλήση.
-         */
         lastIncomingCallId =
             data.call.id;
 
@@ -438,6 +610,7 @@ async function checkIncomingCall() {
             incomingPhone;
 
         await searchCustomer();
+
         await loadCallHistory();
 
     } catch (error) {
@@ -447,17 +620,16 @@ async function checkIncomingCall() {
         );
 
     } finally {
-        incomingCallCheckRunning = false;
+        incomingCallCheckRunning =
+            false;
     }
 }
 
 
-/*
- * Όταν ανοίγει η σελίδα, αποθηκεύουμε το ID της ήδη
- * υπάρχουσας τελευταίας κλήσης χωρίς να ανοίγουμε παλιά καρτέλα.
- *
- * Από εκεί και μετά εμφανίζονται μόνο πραγματικά νέες κλήσεις.
- */
+/* =========================================================
+   ΑΡΧΙΚΟΠΟΙΗΣΗ ΑΝΑΓΝΩΡΙΣΗΣ ΚΛΗΣΗΣ
+========================================================= */
+
 async function initializeIncomingCallWatcher() {
     try {
         const response = await fetch(
@@ -507,6 +679,7 @@ function createCallHistoryItem(call) {
 
     return `
         <div class="call-history-item">
+
             <div class="call-history-information">
 
                 <strong>
@@ -514,15 +687,21 @@ function createCallHistoryItem(call) {
                 </strong>
 
                 <span>
-                    📞 ${escapeHtml(call.phone)}
+                    📞 ${escapeHtml(
+                        call.phone
+                    )}
                 </span>
 
                 <span>
-                    📅 ${escapeHtml(call.date)}
+                    📅 ${escapeHtml(
+                        call.date
+                    )}
                 </span>
 
                 <span>
-                    🕒 ${escapeHtml(call.time)}
+                    🕒 ${escapeHtml(
+                        call.time
+                    )}
                 </span>
 
             </div>
@@ -534,6 +713,7 @@ function createCallHistoryItem(call) {
             >
                 Διαγραφή
             </button>
+
         </div>
     `;
 }
@@ -554,7 +734,10 @@ async function loadCallHistory() {
 
         const data = await response.json();
 
-        if (!response.ok || !data.success) {
+        if (
+            !response.ok ||
+            !data.success
+        ) {
             callHistoryList.innerHTML = `
                 <div class="empty-state">
                     <span>⚠️</span>
@@ -577,7 +760,9 @@ async function loadCallHistory() {
                 call => call.deleted
             );
 
-        if (activeCalls.length === 0) {
+        if (
+            activeCalls.length === 0
+        ) {
             callHistoryList.innerHTML = `
                 <div class="empty-state">
                     <span>📞</span>
@@ -586,6 +771,7 @@ async function loadCallHistory() {
                     </p>
                 </div>
             `;
+
         } else {
             callHistoryList.innerHTML =
                 activeCalls
@@ -595,11 +781,15 @@ async function loadCallHistory() {
                     .join("");
         }
 
-        if (restoreCallHistoryBtn) {
-            restoreCallHistoryBtn.style.display =
-                deletedCalls.length > 0
-                    ? "inline-flex"
-                    : "none";
+        if (
+            restoreCallHistoryBtn
+        ) {
+            restoreCallHistoryBtn
+                .style
+                .display =
+                    deletedCalls.length > 0
+                        ? "inline-flex"
+                        : "none";
         }
 
     } catch (error) {
@@ -620,9 +810,7 @@ async function loadCallHistory() {
 }
 
 
-async function deleteSingleCall(
-    callId
-) {
+async function deleteSingleCall(callId) {
     try {
         const response = await fetch(
             `/api/calls/${callId}`,
@@ -631,9 +819,13 @@ async function deleteSingleCall(
             }
         );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
-        if (!response.ok || !data.success) {
+        if (
+            !response.ok ||
+            !data.success
+        ) {
             alert(
                 data.message ||
                 "Δεν έγινε η διαγραφή."
@@ -655,15 +847,18 @@ async function deleteSingleCall(
 
 
 async function deleteAllCallHistory() {
-    const confirmed = confirm(
-        "Θέλεις να διαγράψεις όλο το ιστορικό κλήσεων;"
-    );
+    const confirmed =
+        confirm(
+            "Θέλεις να διαγράψεις όλο το ιστορικό κλήσεων;"
+        );
 
     if (!confirmed) {
         return;
     }
 
-    deleteCallHistoryBtn.disabled = true;
+    deleteCallHistoryBtn.disabled =
+        true;
+
     deleteCallHistoryBtn.textContent =
         "Διαγραφή...";
 
@@ -675,9 +870,13 @@ async function deleteAllCallHistory() {
             }
         );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
-        if (!response.ok || !data.success) {
+        if (
+            !response.ok ||
+            !data.success
+        ) {
             alert(
                 "Δεν φορτώθηκε το ιστορικό."
             );
@@ -719,7 +918,9 @@ async function deleteAllCallHistory() {
 
 
 async function restoreDeletedCallHistory() {
-    restoreCallHistoryBtn.disabled = true;
+    restoreCallHistoryBtn.disabled =
+        true;
+
     restoreCallHistoryBtn.textContent =
         "Επαναφορά...";
 
@@ -731,9 +932,13 @@ async function restoreDeletedCallHistory() {
             }
         );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
-        if (!response.ok || !data.success) {
+        if (
+            !response.ok ||
+            !data.success
+        ) {
             alert(
                 "Δεν φορτώθηκαν οι διαγραμμένες κλήσεις."
             );
@@ -779,7 +984,8 @@ async function restoreDeletedCallHistory() {
 ========================================================= */
 
 function updateDateTime() {
-    const now = new Date();
+    const now =
+        new Date();
 
     const callDate =
         document.getElementById(
@@ -824,7 +1030,6 @@ if (searchBtn) {
     );
 }
 
-
 if (saveCustomerBtn) {
     saveCustomerBtn.addEventListener(
         "click",
@@ -832,18 +1037,18 @@ if (saveCustomerBtn) {
     );
 }
 
-
 if (phoneInput) {
     phoneInput.addEventListener(
         "keydown",
         (event) => {
-            if (event.key === "Enter") {
+            if (
+                event.key === "Enter"
+            ) {
                 searchCustomer();
             }
         }
     );
 }
-
 
 if (newCustomerBtn) {
     newCustomerBtn.addEventListener(
@@ -852,11 +1057,11 @@ if (newCustomerBtn) {
     );
 }
 
-
 if (callHistoryList) {
     callHistoryList.addEventListener(
         "click",
         (event) => {
+
             const deleteButton =
                 event.target.closest(
                     ".delete-single-call-btn"
@@ -867,7 +1072,9 @@ if (callHistoryList) {
             }
 
             const callId =
-                deleteButton.dataset.callId;
+                deleteButton
+                    .dataset
+                    .callId;
 
             deleteSingleCall(
                 callId
@@ -876,20 +1083,20 @@ if (callHistoryList) {
     );
 }
 
-
 if (deleteCallHistoryBtn) {
-    deleteCallHistoryBtn.addEventListener(
-        "click",
-        deleteAllCallHistory
-    );
+    deleteCallHistoryBtn
+        .addEventListener(
+            "click",
+            deleteAllCallHistory
+        );
 }
 
-
 if (restoreCallHistoryBtn) {
-    restoreCallHistoryBtn.addEventListener(
-        "click",
-        restoreDeletedCallHistory
-    );
+    restoreCallHistoryBtn
+        .addEventListener(
+            "click",
+            restoreDeletedCallHistory
+        );
 }
 
 
