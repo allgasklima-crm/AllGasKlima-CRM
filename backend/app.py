@@ -198,9 +198,11 @@ def get_customer_by_phone(phone):
         WHERE phone1 = ?
            OR phone2 = ?
            OR phone3 = ?
+           OR phone4 = ?
         LIMIT 1
         """,
         (
+            phone,
             phone,
             phone,
             phone
@@ -274,39 +276,109 @@ def index():
 
 @app.get("/api/customer")
 def find_customer():
-    phone = request.args.get(
+    search_text = request.args.get(
         "phone",
         ""
     ).strip()
 
-    if not phone:
-
+    if not search_text:
         return jsonify({
             "success": False,
-
             "message": (
-                "Δεν δόθηκε αριθμός τηλεφώνου."
+                "Γράψε τηλέφωνο, όνομα, περιοχή "
+                "ή διεύθυνση."
             )
         }), 400
 
+    # =====================================================
+    # 1. ΠΡΩΤΑ ΕΛΕΓΧΟΥΜΕ ΑΚΡΙΒΗ ΤΑΥΤΙΣΗ ΤΗΛΕΦΩΝΟΥ
+    # =====================================================
+
     customer = get_customer_by_phone(
-        phone
+        search_text
     )
 
-    if customer is None:
+    if customer is not None:
+     return jsonify({
+        "success": True,
+        "found": True,
+        "multiple": False,
+        "customer": dict(customer)
+    })
+    # =====================================================
+    # 2. ΓΕΝΙΚΗ ΧΕΙΡΟΚΙΝΗΤΗ ΑΝΑΖΗΤΗΣΗ
+    # =====================================================
 
+    connection = get_connection()
+
+    search_like = f"%{search_text}%"
+
+    customers = connection.execute(
+        """
+        SELECT *
+        FROM customers
+        WHERE fullname LIKE ?
+           OR phone1 LIKE ?
+           OR phone2 LIKE ?
+           OR phone3 LIKE ?
+           OR phone4 LIKE ?
+           OR area LIKE ?
+           OR address LIKE ?
+        ORDER BY fullname ASC
+        LIMIT 20
+        """,
+        (
+            search_like,
+            search_like,
+            search_like,
+            search_like,
+            search_like,
+            search_like,
+            search_like
+        )
+    ).fetchall()
+
+    connection.close()
+
+    # =====================================================
+    # ΚΑΝΕΝΑ ΑΠΟΤΕΛΕΣΜΑ
+    # =====================================================
+
+    if len(customers) == 0:
         return jsonify({
             "success": True,
             "found": False,
-            "phone": phone
+            "multiple": False,
+            "search_text": search_text
         })
 
-    return jsonify({
-        "success": True,
-        "found": True,
-        "customer": dict(customer)
-    })
+    # =====================================================
+    # ΕΝΑΣ ΠΕΛΑΤΗΣ
+    # =====================================================
 
+    if len(customers) == 1:
+        return jsonify({
+            "success": True,
+            "found": True,
+            "multiple": False,
+            "customer": dict(
+                customers[0]
+            )
+        })
+
+    # =====================================================
+# ΠΕΡΙΣΣΟΤΕΡΟΙ ΑΠΟ ΕΝΑΣ
+# =====================================================
+
+    return jsonify({
+    "success": True,
+    "found": False,
+    "multiple": True,
+    "message": (
+        "Βρέθηκαν περισσότεροι πελάτες. "
+        "Γράψε τηλέφωνο ή πιο συγκεκριμένα στοιχεία."
+    )
+})
 
 # =========================================================
 # ΔΗΜΙΟΥΡΓΙΑ ΝΕΟΥ ΠΕΛΑΤΗ

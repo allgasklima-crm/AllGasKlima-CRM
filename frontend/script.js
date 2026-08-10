@@ -84,7 +84,7 @@ let currentCustomerId = null;
    ΒΟΗΘΗΤΙΚΕΣ ΣΥΝΑΡΤΗΣΕΙΣ ΠΕΛΑΤΗ
 ========================================================= */
 
-function clearCustomerForm() {
+function clearCustomerForm(preserveCylinders = false) {
     fullnameInput.value = "";
     phone1Input.value = "";
     phone2Input.value = "";
@@ -94,26 +94,27 @@ function clearCustomerForm() {
     floorInput.value = "";
     notesInput.value = "";
 
-    [
-        cylinderScrew,
-        cylinderClip,
-        cylinder3kg,
-        cylinder10Mix,
-        cylinder10Propane,
-        cylinder13kg,
-        cylinder25kg,
-        cylinderBarrel,
-        cylinderShort,
-        cylinderTall
-    ].forEach((checkbox) => {
-        if (checkbox) {
-            checkbox.checked = false;
-        }
-    });
+    if (!preserveCylinders) {
+        [
+            cylinderScrew,
+            cylinderClip,
+            cylinder3kg,
+            cylinder10Mix,
+            cylinder10Propane,
+            cylinder13kg,
+            cylinder25kg,
+            cylinderBarrel,
+            cylinderShort,
+            cylinderTall
+        ].forEach((checkbox) => {
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+        });
+    }
 
     currentCustomerId = null;
 }
-
 
 function fillCustomerForm(customer) {
     currentCustomerId =
@@ -253,7 +254,23 @@ async function searchCustomer() {
 
             return;
         }
+if (data.multiple) {
+    clearCustomerForm();
 
+    result.innerHTML = `
+        <div class="incoming-call-message">
+            ${escapeHtml(
+                data.message ||
+                "Βρέθηκαν περισσότεροι πελάτες. Γράψε τηλέφωνο ή πιο συγκεκριμένα στοιχεία."
+            )}
+        </div>
+    `;
+
+    phoneInput.focus();
+    phoneInput.select();
+
+    return;
+}
         if (!data.found) {
             clearCustomerForm();
 
