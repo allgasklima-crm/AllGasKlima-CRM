@@ -93,7 +93,12 @@ function clearCustomerForm(preserveCylinders = false) {
     addressInput.value = "";
     floorInput.value = "";
     notesInput.value = "";
+const customerNumber =
+    document.getElementById("customerNumber");
 
+if (customerNumber) {
+    customerNumber.textContent = "—";
+}
     if (!preserveCylinders) {
         [
             cylinderScrew,
@@ -117,6 +122,24 @@ function clearCustomerForm(preserveCylinders = false) {
 }
 
 function fillCustomerForm(customer) {
+    const customerNumber =
+    document.getElementById("customerNumber");
+
+if (customerNumber) {
+    fetch("/api/customers", {
+        cache: "no-store"
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (
+                data.success &&
+                Array.isArray(data.customers)
+            ) {
+                customerNumber.textContent =
+                    data.customers.length;
+            }
+        });
+}
     currentCustomerId =
         customer.id ?? null;
 
@@ -1136,3 +1159,239 @@ setInterval(
 );
 
 initializeIncomingCallWatcher();
+
+/* =========================================
+   ΕΥΡΕΤΗΡΙΟ ΠΕΛΑΤΩΝ
+   ========================================= */
+
+const customerDirectoryBtn =
+    document.getElementById("customerDirectoryBtn");
+
+const customerDirectoryModal =
+    document.getElementById("customerDirectoryModal");
+
+const closeCustomerDirectoryBtn =
+    document.getElementById("closeCustomerDirectoryBtn");
+
+const customerDirectoryBody =
+    document.getElementById("customerDirectoryBody");
+
+const customerDirectorySearch =
+    document.getElementById("customerDirectorySearch");
+
+
+async function openCustomerDirectory() {
+
+    customerDirectoryModal.classList.remove("hidden");
+
+    customerDirectoryBody.innerHTML = `
+        <tr>
+            <td colspan="6">
+                Φόρτωση πελατών...
+            </td>
+        </tr>
+    `;
+
+    try {
+
+        const response =
+            await fetch("/api/customers", {
+                cache: "no-store"
+            });
+
+        const data =
+            await response.json();
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
+            customerDirectoryBody.innerHTML = `
+                <tr>
+                    <td colspan="5">
+                        Δεν ήταν δυνατή η φόρτωση του ευρετηρίου.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+window.customerDirectoryList =
+    data.customers;
+
+renderCustomerDirectory(
+    data.customers
+);
+        
+
+    } catch (error) {
+
+        console.error(
+            "Σφάλμα ευρετηρίου πελατών:",
+            error
+        );
+
+        customerDirectoryBody.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    Δεν υπάρχει σύνδεση με τον server.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+function renderCustomerDirectory(customers) {
+
+    if (customers.length === 0) {
+
+        customerDirectoryBody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    Δεν υπάρχουν αποθηκευμένοι πελάτες.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    customerDirectoryBody.innerHTML =
+        customers.map((customer, index) => `
+
+            <tr data-customer-id="${customer.id}">
+
+                <td>
+                ${index + 1}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        customer.fullname || ""
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        customer.phone1 || ""
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        customer.area || ""
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        customer.address || ""
+                    )}
+                </td>
+<td>
+    <button
+        type="button"
+        class="delete-customer-btn"
+        data-customer-id="${customer.id}"
+    >
+        Διαγραφή
+    </button>
+</td>
+            </tr>
+
+        `).join("");
+}
+
+async function deleteCustomer(customerId) {
+    const confirmed = confirm(
+        "Σίγουρα θέλεις να διαγράψεις αυτόν τον πελάτη;"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `/api/customer/${customerId}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            alert(
+                data.message ||
+                "Δεν έγινε η διαγραφή του πελάτη."
+            );
+
+            return;
+        }
+
+        await openCustomerDirectory();
+
+        if (
+            currentCustomerId !== null &&
+            Number(currentCustomerId) === Number(customerId)
+        ) {
+            clearCustomerForm();
+            currentCustomerId = null;
+        }
+
+    } catch (error) {
+        console.error(
+            "Σφάλμα διαγραφής πελάτη:",
+            error
+        );
+
+        alert(
+    "Σφάλμα: " + error.message
+);
+    }
+}
+function closeCustomerDirectory() {
+
+    customerDirectoryModal.classList.add("hidden");
+
+    customerDirectorySearch.value = "";
+}
+if (customerDirectoryBody) {
+    customerDirectoryBody.addEventListener(
+        "click",
+        (event) => {
+            const deleteButton =
+                event.target.closest(
+                    ".delete-customer-btn"
+                );
+
+            if (!deleteButton) {
+                return;
+            }
+
+            const customerId =
+                deleteButton.dataset.customerId;
+
+            deleteCustomer(customerId);
+        }
+    );
+}
+
+if (customerDirectoryBtn) {
+
+    customerDirectoryBtn.addEventListener(
+        "click",
+        openCustomerDirectory
+    );
+}
+
+
+if (closeCustomerDirectoryBtn) {
+
+    closeCustomerDirectoryBtn.addEventListener(
+        "click",
+        closeCustomerDirectory
+    );
+}

@@ -123,7 +123,27 @@ body {
     justify-content: space-between;
     gap: 20px;
 }
+.customer-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    margin-left: 25px;
+}
 
+.customer-number {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.customer-header-actions .customer-status {
+    white-space: nowrap;
+}
 .section-kicker {
     display: block;
     margin-bottom: 5px;
@@ -621,4 +641,117 @@ textarea:focus {
     width: auto;
     height: auto;
     margin: 0;
+}
+
+/* =========================================
+   ΕΥΡΕΤΗΡΙΟ ΠΕΛΑΤΩΝ
+   ========================================= */
+
+.directory-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+    background: rgba(20, 24, 32, 0.55);
+}
+
+.directory-modal.hidden {
+    display: none !important;
+}
+
+.directory-window {
+    width: min(1100px, 95vw);
+    max-height: 85vh;
+    overflow: hidden;
+
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.directory-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid #eceff4;
+}
+
+.directory-header h2 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.directory-close {
+    width: 38px;
+    height: 38px;
+
+    border: 0;
+    border-radius: 9px;
+
+    background: #f1f3f6;
+    color: #444;
+
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.directory-close:hover {
+    background: #e4e7ec;
+}
+
+.directory-search {
+    padding: 18px 24px;
+}
+
+.directory-search input {
+    width: 100%;
+    min-height: 46px;
+}
+
+.directory-table-wrap {
+    max-height: 55vh;
+    overflow: auto;
+
+    margin: 0 24px 24px;
+    border: 1px solid #e1e5eb;
+    border-radius: 10px;
+}
+
+.directory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.directory-table th,
+.directory-table td {
+    padding: 13px 14px;
+    border-bottom: 1px solid #eceff4;
+    text-align: left;
+    font-size: 14px;
+}
+
+.directory-table th {
+    position: sticky;
+    top: 0;
+
+    background: #f6f3fb;
+    color: #4e237f;
+
+    font-weight: 800;
+}
+
+.directory-table tbody tr {
+    cursor: pointer;
+}
+
+.directory-table tbody tr:hover {
+    background: #f8f5fc;
 }

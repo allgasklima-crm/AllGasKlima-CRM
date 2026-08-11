@@ -198,14 +198,12 @@ def get_customer_by_phone(phone):
         WHERE phone1 = ?
            OR phone2 = ?
            OR phone3 = ?
-           OR phone4 = ?
         LIMIT 1
         """,
         (
             phone,
             phone,
             phone,
-            phone
         )
     ).fetchone()
 
@@ -273,7 +271,71 @@ def index():
 # =========================================================
 # ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ
 # =========================================================
+@app.get("/api/customers")
+def get_customers():
 
+    connection = get_connection()
+
+    customers = connection.execute(
+        """
+        SELECT
+            id,
+            fullname,
+            phone1,
+            phone2,
+            phone3,
+            area,
+            address
+        FROM customers
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "customers": [
+            dict(customer)
+            for customer in customers
+        ]
+    })
+@app.delete("/api/customer/<int:customer_id>")
+def delete_customer(customer_id):
+    connection = get_connection()
+
+    customer = connection.execute(
+        """
+        SELECT id
+        FROM customers
+        WHERE id = ?
+        """,
+        (customer_id,)
+    ).fetchone()
+
+    if customer is None:
+        connection.close()
+
+        return jsonify({
+            "success": False,
+            "message": "Ο πελάτης δεν βρέθηκε."
+        }), 404
+
+    connection.execute(
+        """
+        DELETE FROM customers
+        WHERE id = ?
+        """,
+        (customer_id,)
+    )
+
+    connection.commit()
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "message": "Ο πελάτης διαγράφηκε επιτυχώς."
+    })
 @app.get("/api/customer")
 def find_customer():
     search_text = request.args.get(

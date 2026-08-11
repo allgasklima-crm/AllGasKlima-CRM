@@ -118,25 +118,39 @@
 
                     <div class="panel-heading">
 
-                        <div>
-                            <span class="section-kicker">
-                                ΚΑΡΤΕΛΑ ΠΕΛΑΤΗ
-                            </span>
+                       <div>
+    <span class="section-kicker">
+        ΚΑΡΤΕΛΑ ΠΕΛΑΤΗ
+    </span>
 
-                            <h2>Στοιχεία πελάτη</h2>
-                        </div>
+    <h2>Στοιχεία πελάτη</h2>
+</div>
 
+<div class="customer-header-actions">
 
-                        <button
-                            type="button"
-                            id="newCustomerBtn"
-                            class="customer-status"
-                        >
-                            Νέος πελάτης
-                        </button>
+    <div class="customer-number">
+        Α/Α:
+        <strong id="customerNumber">—</strong>
+    </div>
 
-                    </div>
+    <button
+        type="button"
+        id="customerDirectoryBtn"
+        class="customer-status"
+    >
+        Ευρετήριο Πελατών
+    </button>
 
+    <button
+        type="button"
+        id="newCustomerBtn"
+        class="customer-status"
+    >
+        Νέος πελάτης
+    </button>
+
+</div>
+</div>
 
                     <div
                         id="newCustomerForm"
@@ -853,7 +867,56 @@
         </section>
 
     </main>
+<!-- ΕΥΡΕΤΗΡΙΟ ΠΕΛΑΤΩΝ -->
+<div id="customerDirectoryModal" class="directory-modal hidden">
 
+    <div class="directory-window">
+
+        <div class="directory-header">
+            <div>
+                <span class="section-kicker">ΠΕΛΑΤΟΛΟΓΙΟ</span>
+                <h2>Ευρετήριο Πελατών</h2>
+            </div>
+
+            <button
+                type="button"
+                id="closeCustomerDirectoryBtn"
+                class="directory-close"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="directory-search">
+            <input
+                type="text"
+                id="customerDirectorySearch"
+                placeholder="Αναζήτηση με όνομα, τηλέφωνο, περιοχή ή διεύθυνση"
+            >
+        </div>
+
+        <div class="directory-table-wrap">
+            <table class="directory-table">
+                <thead>
+                    <tr>
+                        <th>Α/Α</th>
+                        <th>Ονοματεπώνυμο</th>
+                        <th>Τηλέφωνο</th>
+                        <th>Περιοχή</th>
+                        <th>Διεύθυνση</th>
+                        <th>Διαγραφή</th>
+                    </tr>
+                </thead>
+
+                <tbody id="customerDirectoryBody">
+                    <!-- Οι πελάτες θα μπαίνουν εδώ αυτόματα -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
 
     <script src="script.js"></script>
 
