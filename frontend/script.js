@@ -97,7 +97,19 @@ const customerNumber =
     document.getElementById("customerNumber");
 
 if (customerNumber) {
-    customerNumber.textContent = "0";
+    fetch("/api/customers", {
+        cache: "no-store"
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (
+            data.success &&
+            Array.isArray(data.customers)
+        ) {
+            customerNumber.textContent =
+                data.customers.length;
+        }
+    });
 }
     if (!preserveCylinders) {
         [
