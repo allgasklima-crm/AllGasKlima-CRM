@@ -97,7 +97,7 @@ const customerNumber =
     document.getElementById("customerNumber");
 
 if (customerNumber) {
-    customerNumber.textContent = "—";
+    customerNumber.textContent = "0";
 }
     if (!preserveCylinders) {
         [
@@ -129,16 +129,20 @@ if (customerNumber) {
     fetch("/api/customers", {
         cache: "no-store"
     })
-        .then(response => response.json())
-        .then(data => {
-            if (
-                data.success &&
-                Array.isArray(data.customers)
-            ) {
-                customerNumber.textContent =
-                    data.customers.length;
-            }
-        });
+    .then(response => response.json())
+    .then(data => {
+        if (
+            data.success &&
+            Array.isArray(data.customers)
+        ) {
+            const index = data.customers.findIndex(
+                item => Number(item.id) === Number(customer.id)
+            );
+
+            customerNumber.textContent =
+                index >= 0 ? index + 1 : "—";
+        }
+    });
 }
     currentCustomerId =
         customer.id ?? null;
@@ -1338,6 +1342,24 @@ async function deleteCustomer(customerId) {
             Number(currentCustomerId) === Number(customerId)
         ) {
             clearCustomerForm();
+            fetch("/api/customers", {
+    cache: "no-store"
+})
+.then(response => response.json())
+.then(data => {
+    if (
+        data.success &&
+        Array.isArray(data.customers)
+    ) {
+        const customerNumber =
+            document.getElementById("customerNumber");
+
+        if (customerNumber) {
+    customerNumber.textContent =
+        data.customers.length;
+}
+}
+});
             currentCustomerId = null;
         }
 
