@@ -135,12 +135,8 @@ if (customerNumber) {
             data.success &&
             Array.isArray(data.customers)
         ) {
-            const index = data.customers.findIndex(
-                item => Number(item.id) === Number(customer.id)
-            );
-
             customerNumber.textContent =
-                index >= 0 ? index + 1 : "—";
+    data.customers.length;
         }
     });
 }
