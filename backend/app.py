@@ -1392,6 +1392,205 @@ def restore_call(call_id):
         )
     })
 
+# =========================================================
+# ΑΠΟΘΗΚΕΥΣΗ ΠΑΡΑΓΓΕΛΙΑΣ
+# =========================================================
+
+@app.post("/api/orders")
+def save_order():
+
+    data = request.get_json(silent=True) or {}
+
+    fullname = str(data.get("fullname") or "").strip()
+    phone1 = str(data.get("phone1") or "").strip()
+    phone2 = str(data.get("phone2") or "").strip()
+    phone3 = str(data.get("phone3") or "").strip()
+    area = str(data.get("area") or "").strip()
+    address = str(data.get("address") or "").strip()
+    floor = str(data.get("floor") or "").strip()
+    notes = str(data.get("notes") or "").strip()
+    order_notes = str(data.get("order_notes") or "").strip()
+
+    if not fullname or not phone1:
+        return jsonify({
+            "success": False,
+            "message": "Χρειάζονται ονοματεπώνυμο και κύριο τηλέφωνο."
+        }), 400
+
+    connection = get_connection()
+
+    customer_row = connection.execute(
+        """
+        SELECT id
+        FROM customers
+        WHERE phone1 = ?
+           OR phone2 = ?
+           OR phone3 = ?
+        LIMIT 1
+        """,
+        (
+            phone1,
+            phone1,
+            phone1
+        )
+    ).fetchone()
+
+    customer_id = (
+        customer_row["id"]
+        if customer_row
+        else None
+    )
+
+    cursor = connection.execute(
+        """
+        INSERT INTO orders (
+            customer_id,
+            fullname,
+            phone1,
+            phone2,
+            phone3,
+            area,
+            address,
+            floor,
+            notes,
+
+            delivery_3kg,
+            delivery_10kg_mix,
+            delivery_10kg_propane,
+            delivery_13kg,
+            delivery_25kg,
+
+            return_3kg,
+            return_10kg_mix,
+            return_10kg_propane,
+            return_13kg,
+            return_25kg,
+
+            order_notes
+        )
+        VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?
+        )
+        """,
+        (
+            customer_id,
+            fullname,
+            phone1,
+            phone2,
+            phone3,
+            area,
+            address,
+            floor,
+            notes,
+
+            int(data.get("delivery_3kg") or 0),
+            int(data.get("delivery_10kg_mix") or 0),
+            int(data.get("delivery_10kg_propane") or 0),
+            int(data.get("delivery_13kg") or 0),
+            int(data.get("delivery_25kg") or 0),
+
+            int(data.get("return_3kg") or 0),
+            int(data.get("return_10kg_mix") or 0),
+            int(data.get("return_10kg_propane") or 0),
+            int(data.get("return_13kg") or 0),
+            int(data.get("return_25kg") or 0),
+
+            order_notes
+        )
+    )
+
+    connection.commit()
+
+    order_id = cursor.lastrowid
+
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "order_id": order_id,
+        "message": "Η παραγγελία αποθηκεύτηκε."
+    })
+# =========================================================
+# ΠΛΗΘΟΣ ΣΗΜΕΡΙΝΩΝ ΠΑΡΑΓΓΕΛΙΩΝ
+# =========================================================
+
+@app.get("/api/orders/today-count")
+def get_today_orders_count():
+
+    connection = get_connection()
+
+    row = connection.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM orders
+        WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
+        """
+    ).fetchone()
+
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "count": row["total"] if row else 0
+    })
+# =========================================================
+# ΛΙΣΤΑ ΣΗΜΕΡΙΝΩΝ ΠΑΡΑΓΓΕΛΙΩΝ
+# =========================================================
+
+@app.get("/api/orders/today")
+def get_today_orders():
+
+    connection = get_connection()
+
+    rows = connection.execute(
+        """
+        SELECT
+            id,
+            fullname,
+            phone1,
+            area,
+            address,
+            delivery_3kg,
+            delivery_10kg_mix,
+            delivery_10kg_propane,
+            delivery_13kg,
+            delivery_25kg,
+            order_notes,
+            created_at
+        FROM orders
+        WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
+        ORDER BY created_at DESC
+        """
+    ).fetchall()
+
+    connection.close()
+
+    orders = []
+
+    for row in rows:
+        orders.append({
+            "id": row["id"],
+            "fullname": row["fullname"],
+            "phone1": row["phone1"],
+            "area": row["area"],
+            "address": row["address"],
+            "delivery_3kg": row["delivery_3kg"],
+            "delivery_10kg_mix": row["delivery_10kg_mix"],
+            "delivery_10kg_propane": row["delivery_10kg_propane"],
+            "delivery_13kg": row["delivery_13kg"],
+            "delivery_25kg": row["delivery_25kg"],
+            "order_notes": row["order_notes"],
+            "created_at": row["created_at"]
+        })
+
+    return jsonify({
+        "success": True,
+        "orders": orders
+    })
+
 
 # =========================================================
 # ΑΡΧΙΚΟΠΟΙΗΣΗ ΒΑΣΗΣ

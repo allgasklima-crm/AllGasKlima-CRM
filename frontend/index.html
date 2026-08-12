@@ -723,11 +723,12 @@
                     <div class="action-row">
 
                         <button
-                            type="button"
-                            class="btn btn-secondary"
-                        >
-                            Αποθήκευση παραγγελίας
-                        </button>
+                    type="button"
+                    id="saveOrderBtn"
+                    class="btn btn-secondary"
+>
+                     Αποθήκευση παραγγελίας
+                    </button>
 
                         <button
                             type="button"
@@ -849,10 +850,10 @@
                 <strong>0</strong>
             </div>
 
-            <div class="summary-card">
-                <span>Παραγγελίες σήμερα</span>
-                <strong>0</strong>
-            </div>
+           <div class="summary-card" id="todayOrdersCard">
+    <span>Παραγγελίες σήμερα</span>
+    <strong id="todayOrdersCount">0</strong>
+</div>
 
             <div class="summary-card">
                 <span>Σε διανομή</span>
@@ -910,6 +911,50 @@
 
                 <tbody id="customerDirectoryBody">
                     <!-- Οι πελάτες θα μπαίνουν εδώ αυτόματα -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+<!-- ΠΑΡΑΓΓΕΛΙΕΣ ΣΗΜΕΡΑ -->
+<div id="todayOrdersModal" class="directory-modal hidden">
+
+    <div class="directory-window">
+
+        <div class="directory-header">
+            <div>
+                <span class="section-kicker">ΠΑΡΑΓΓΕΛΙΕΣ</span>
+                <h2>Παραγγελίες σήμερα</h2>
+            </div>
+
+            <button
+                type="button"
+                id="closeTodayOrdersBtn"
+                class="directory-close"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="directory-table-wrap">
+            <table class="directory-table">
+                <thead>
+                    <tr>
+                        <th>Α/Α</th>
+                        <th>Ώρα</th>
+                        <th>Πελάτης</th>
+                        <th>Τηλέφωνο</th>
+                        <th>Περιοχή</th>
+                        <th>Διεύθυνση</th>
+                        <th>Παραγγελία</th>
+                        <th>Κατάσταση</th>
+                    </tr>
+                </thead>
+
+                <tbody id="todayOrdersBody">
+                    <!-- Οι σημερινές παραγγελίες θα μπαίνουν εδώ αυτόματα -->
                 </tbody>
             </table>
         </div>
