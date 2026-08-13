@@ -1527,6 +1527,7 @@ def get_today_orders_count():
         SELECT COUNT(*) AS total
         FROM orders
         WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
+        AND COALESCE(status, 'new') != 'cleared'
         """
     ).fetchone()
 
@@ -1559,6 +1560,7 @@ def get_today_orders():
             delivery_13kg,
             delivery_25kg,
             order_notes,
+            status,
             created_at
         FROM orders
         WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
@@ -1584,6 +1586,7 @@ ORDER BY created_at DESC
             "delivery_13kg": row["delivery_13kg"],
             "delivery_25kg": row["delivery_25kg"],
             "order_notes": row["order_notes"],
+            "status": row["status"],
             "created_at": row["created_at"]
         })
 
@@ -1628,12 +1631,44 @@ def clear_today_orders():
     )
 
     connection.commit()
+    cleared = cursor.rowcount
     connection.close()
 
     return jsonify({
         "success": True,
-        "cleared": cursor.rowcount
+        "cleared": cleared
+    })     
+    
+
+    # =========================================================
+# ΟΛΟΚΛΗΡΩΣΗ ΜΙΑΣ ΠΑΡΑΓΓΕΛΙΑΣ
+# =========================================================
+
+@app.post("/api/orders/<int:order_id>/complete")
+def complete_order(order_id):
+
+    connection = get_connection()
+
+    cursor = connection.execute(
+        """
+        UPDATE orders
+        SET status = 'completed'
+        WHERE id = ?
+        """,
+        (order_id,)
+    )
+
+    connection.commit()
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "updated": cursor.rowcount
     })
+
+    
+
+    
 # =========================================================
 # ΑΡΧΙΚΟΠΟΙΗΣΗ ΒΑΣΗΣ
 # =========================================================

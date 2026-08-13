@@ -755,3 +755,12 @@ textarea:focus {
 .directory-table tbody tr:hover {
     background: #f8f5fc;
 }
+/* Ολοκληρωμένη παραγγελία */
+.completed-order {
+    background: #d9f7df !important;
+}
+
+.completed-order .order-status {
+    color: #168a32 !important;
+    font-weight: 700;
+}

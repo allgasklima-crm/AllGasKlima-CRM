@@ -1593,23 +1593,21 @@ if (todayOrdersCard && todayOrdersModal && closeTodayOrdersBtn) {
 async function loadTodayOrders() {
     const todayOrdersBody = document.getElementById("todayOrdersBody");
 
-    if (!todayOrdersBody) return;
-
-    todayOrdersBody.innerHTML = `
-        <tr>
-            <td colspan="8">Φόρτωση...</td>
-        </tr>
-    `;
+    if (!todayOrdersBody) {
+        return;
+    }
 
     try {
         const response = await fetch("/api/orders/today");
         const data = await response.json();
 
-        if (!data.success || !Array.isArray(data.orders)) {
-            throw new Error("Δεν ήταν δυνατή η φόρτωση των παραγγελιών.");
+        if (!data.success) {
+            throw new Error("Αποτυχία φόρτωσης παραγγελιών.");
         }
 
-        if (data.orders.length === 0) {
+        todayOrdersBody.innerHTML = "";
+
+        if (!data.orders || data.orders.length === 0) {
             todayOrdersBody.innerHTML = `
                 <tr>
                     <td colspan="8">Δεν υπάρχουν σημερινές παραγγελίες.</td>
@@ -1618,29 +1616,27 @@ async function loadTodayOrders() {
             return;
         }
 
-        todayOrdersBody.innerHTML = "";
-
         data.orders.forEach((order, index) => {
             const products = [];
 
-            if (order.delivery_3kg > 0) {
+            if (Number(order.delivery_3kg) > 0) {
                 products.push(`${order.delivery_3kg} × 3kg`);
             }
 
-            if (order.delivery_10kg_mix > 0) {
+            if (Number(order.delivery_10kg_mix) > 0) {
                 products.push(`${order.delivery_10kg_mix} × 10kg Μίγμα`);
             }
 
-            if (order.delivery_10kg_propane > 0) {
+            if (Number(order.delivery_10kg_propane) > 0) {
                 products.push(`${order.delivery_10kg_propane} × 10kg Προπάνιο`);
             }
 
-            if (order.delivery_13kg > 0) {
-                products.push(`${order.delivery_13kg} × 13kg Προπάνιο`);
+            if (Number(order.delivery_13kg) > 0) {
+                products.push(`${order.delivery_13kg} × 13kg`);
             }
 
-            if (order.delivery_25kg > 0) {
-                products.push(`${order.delivery_25kg} × 25kg Προπάνιο`);
+            if (Number(order.delivery_25kg) > 0) {
+                products.push(`${order.delivery_25kg} × 25kg`);
             }
 
             const createdAt = order.created_at || "";
@@ -1650,6 +1646,13 @@ async function loadTodayOrders() {
 
             const row = document.createElement("tr");
 
+            row.dataset.orderId = order.id;
+            row.style.cursor = "pointer";
+
+            if (order.status === "completed") {
+                row.classList.add("completed-order");
+            }
+
             row.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${time}</td>
@@ -1658,8 +1661,40 @@ async function loadTodayOrders() {
                 <td>${order.area || ""}</td>
                 <td>${order.address || ""}</td>
                 <td>${products.join("<br>") || "-"}</td>
-                <td>Νέα</td>
+                <td class="order-status">
+                    ${order.status === "completed" ? "Εκτελέστηκε" : "Νέα"}
+                </td>
             `;
+
+            row.addEventListener("click", async () => {
+                if (row.classList.contains("completed-order")) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `/api/orders/${order.id}/complete`,
+                        {
+                            method: "POST"
+                        }
+                    );
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        const statusCell =
+                            row.querySelector(".order-status");
+
+                        if (statusCell) {
+                            statusCell.textContent = "Εκτελέστηκε";
+                        }
+
+                        row.classList.add("completed-order");
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            });
 
             todayOrdersBody.appendChild(row);
         });
