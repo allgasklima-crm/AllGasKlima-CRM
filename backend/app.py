@@ -1562,7 +1562,8 @@ def get_today_orders():
             created_at
         FROM orders
         WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
-        ORDER BY created_at DESC
+  AND COALESCE(status, 'new') != 'cleared'
+ORDER BY created_at DESC
         """
     ).fetchall()
 
@@ -1591,7 +1592,48 @@ def get_today_orders():
         "orders": orders
     })
 
+def create_order_status_column():
+    connection = get_connection()
 
+    columns = connection.execute(
+        "PRAGMA table_info(orders)"
+    ).fetchall()
+
+    column_names = [column["name"] for column in columns]
+
+    if "status" not in column_names:
+        connection.execute(
+            "ALTER TABLE orders ADD COLUMN status TEXT DEFAULT 'new'"
+        )
+        connection.commit()
+
+    connection.close()
+    # =========================================================
+# ΚΑΘΑΡΙΣΜΟΣ ΟΛΩΝ ΤΩΝ ΣΗΜΕΡΙΝΩΝ ΠΑΡΑΓΓΕΛΙΩΝ
+# ΧΩΡΙΣ ΔΙΑΓΡΑΦΗ ΑΠΟ ΤΟ ΙΣΤΟΡΙΚΟ
+# =========================================================
+
+@app.post("/api/orders/today/clear")
+def clear_today_orders():
+
+    connection = get_connection()
+
+    cursor = connection.execute(
+        """
+        UPDATE orders
+        SET status = 'cleared'
+        WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
+          AND COALESCE(status, 'new') != 'cleared'
+        """
+    )
+
+    connection.commit()
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "cleared": cursor.rowcount
+    })
 # =========================================================
 # ΑΡΧΙΚΟΠΟΙΗΣΗ ΒΑΣΗΣ
 # =========================================================
@@ -1599,6 +1641,8 @@ def get_today_orders():
 create_call_history_table()
 
 create_customer_cylinder_columns()
+
+create_order_status_column()
 
 
 # =========================================================

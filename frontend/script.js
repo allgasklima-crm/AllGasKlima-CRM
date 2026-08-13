@@ -1674,3 +1674,33 @@ async function loadTodayOrders() {
         `;
     }
 }
+const deleteAllTodayOrdersBtn = document.getElementById("deleteAllTodayOrdersBtn");
+
+if (deleteAllTodayOrdersBtn) {
+    deleteAllTodayOrdersBtn.addEventListener("click", async () => {
+        const confirmed = confirm(
+            "Θέλεις να καθαρίσεις όλες τις σημερινές παραγγελίες από τη λίστα;"
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch("/api/orders/today/clear", {
+                method: "POST"
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error("Αποτυχία καθαρισμού παραγγελιών.");
+            }
+
+            await loadTodayOrders();
+            await loadTodayOrdersCount();
+
+        } catch (error) {
+            console.error(error);
+            alert("Παρουσιάστηκε σφάλμα.");
+        }
+    });
+}
