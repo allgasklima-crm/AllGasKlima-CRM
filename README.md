@@ -148,7 +148,7 @@ node server.js
 Αποτέλεσμα:
 
 ```
-Server running on http://localhost:3000
+Server running on http://127.0.0.1:5000
 ```
 
 ---
