@@ -376,29 +376,27 @@ def find_customer():
     search_like = f"%{search_text}%"
 
     customers = connection.execute(
-        """
-        SELECT *
-        FROM customers
-        WHERE fullname LIKE ?
-           OR phone1 LIKE ?
-           OR phone2 LIKE ?
-           OR phone3 LIKE ?
-           OR phone4 LIKE ?
-           OR area LIKE ?
-           OR address LIKE ?
-        ORDER BY fullname ASC
-        LIMIT 20
-        """,
-        (
-            search_like,
-            search_like,
-            search_like,
-            search_like,
-            search_like,
-            search_like,
-            search_like
-        )
-    ).fetchall()
+    """
+    SELECT *
+    FROM customers
+    WHERE fullname LIKE ?
+       OR phone1 LIKE ?
+       OR phone2 LIKE ?
+       OR phone3 LIKE ?
+       OR area LIKE ?
+       OR address LIKE ?
+    ORDER BY fullname ASC
+    LIMIT 20
+    """,
+    (
+        search_like,
+        search_like,
+        search_like,
+        search_like,
+        search_like,
+        search_like,
+    )
+).fetchall()
 
     connection.close()
 
