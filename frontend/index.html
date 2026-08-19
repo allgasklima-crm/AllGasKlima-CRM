@@ -845,9 +845,9 @@
 
         <section class="daily-summary">
 
-            <div class="summary-card">
+            <div class="summary-card" id="callsTodayCard">
                 <span>Κλήσεις σήμερα</span>
-                <strong>0</strong>
+                <strong id="callsTodayCount">0</strong>
             </div>
 
            <div class="summary-card" id="todayOrdersCard">
@@ -973,6 +973,50 @@
     </div>
 
 </div>
+
+</div>
+
+<!-- ΚΛΗΣΕΙΣ ΣΗΜΕΡΑ -->
+<div id="todayCallsModal" class="directory-modal hidden">
+
+    <div class="directory-window">
+
+        <div class="directory-header">
+            <div>
+                <span class="section-kicker">ΚΛΗΣΕΙΣ</span>
+                <h2>Κλήσεις σήμερα</h2>
+            </div>
+
+            <button
+                type="button"
+                id="closeTodayCallsBtn"
+                class="directory-close"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="directory-table-wrap">
+            <table class="directory-table">
+                <thead>
+                    <tr>
+                        <th>Α/Α</th>
+                        <th>Ώρα</th>
+                        <th>Πελάτης</th>
+                        <th>Τηλέφωνο</th>
+                    </tr>
+                </thead>
+
+                <tbody id="todayCallsBody">
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="js/ui.js"></script>
 <<script src="js/ui.js"></script>
 <script src="js/customers.js"></script>
 <script src="js/orders.js"></script>
