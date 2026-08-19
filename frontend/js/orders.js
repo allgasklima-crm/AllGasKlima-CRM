@@ -1,102 +1,201 @@
 /* =========================================
    ΠΑΡΑΓΓΕΛΙΕΣ
-   ========================================= */
+========================================= */
 
 const saveOrderBtn =
     document.getElementById("saveOrderBtn");
-    if (saveOrderBtn) {
+
+const sendToDriverBtn =
+    document.getElementById("sendToDriverBtn");
+
+/*
+   Κρατάμε το ID της τελευταίας παραγγελίας
+   που αποθηκεύτηκε από τη φόρμα.
+*/
+let lastSavedOrderId = null;
+
+
+/* =========================================
+   ΑΠΟΘΗΚΕΥΣΗ ΠΑΡΑΓΓΕΛΙΑΣ
+========================================= */
+
+if (saveOrderBtn) {
 
     saveOrderBtn.addEventListener(
         "click",
         async () => {
 
             const orderData = {
+
                 fullname:
-                    document.getElementById("fullname").value.trim(),
+                    document
+                        .getElementById("fullname")
+                        .value
+                        .trim(),
 
                 phone1:
-                    document.getElementById("phone1").value.trim(),
+                    document
+                        .getElementById("phone1")
+                        .value
+                        .trim(),
 
                 phone2:
-                    document.getElementById("phone2").value.trim(),
+                    document
+                        .getElementById("phone2")
+                        .value
+                        .trim(),
 
                 phone3:
-                    document.getElementById("phone3").value.trim(),
+                    document
+                        .getElementById("phone3")
+                        .value
+                        .trim(),
 
                 area:
-                    document.getElementById("area").value.trim(),
+                    document
+                        .getElementById("area")
+                        .value
+                        .trim(),
 
                 address:
-                    document.getElementById("address").value.trim(),
+                    document
+                        .getElementById("address")
+                        .value
+                        .trim(),
 
                 floor:
-                    document.getElementById("floor").value.trim(),
+                    document
+                        .getElementById("floor")
+                        .value
+                        .trim(),
 
                 notes:
-                    document.getElementById("notes").value.trim(),
+                    document
+                        .getElementById("notes")
+                        .value
+                        .trim(),
 
                 delivery_3kg:
-                    document.getElementById("delivery3kg").value || 0,
+                    document
+                        .getElementById("delivery3kg")
+                        .value || 0,
 
                 delivery_10kg_mix:
-                    document.getElementById("delivery10kgMix").value || 0,
+                    document
+                        .getElementById("delivery10kgMix")
+                        .value || 0,
 
                 delivery_10kg_propane:
-                    document.getElementById("delivery10kgPropane").value || 0,
+                    document
+                        .getElementById("delivery10kgPropane")
+                        .value || 0,
 
                 delivery_13kg:
-                    document.getElementById("delivery13kg").value || 0,
+                    document
+                        .getElementById("delivery13kg")
+                        .value || 0,
 
                 delivery_25kg:
-                    document.getElementById("delivery25kg").value || 0,
+                    document
+                        .getElementById("delivery25kg")
+                        .value || 0,
 
                 return_3kg:
-                    document.getElementById("return3kg").value || 0,
+                    document
+                        .getElementById("return3kg")
+                        .value || 0,
 
                 return_10kg_mix:
-                    document.getElementById("return10kgMix").value || 0,
+                    document
+                        .getElementById("return10kgMix")
+                        .value || 0,
 
                 return_10kg_propane:
-                    document.getElementById("return10kgPropane").value || 0,
+                    document
+                        .getElementById("return10kgPropane")
+                        .value || 0,
 
                 return_13kg:
-                    document.getElementById("return13kg").value || 0,
+                    document
+                        .getElementById("return13kg")
+                        .value || 0,
 
                 return_25kg:
-                    document.getElementById("return25kg").value || 0,
+                    document
+                        .getElementById("return25kg")
+                        .value || 0,
 
                 order_notes:
-                    document.getElementById("orderNotes").value.trim()
+                    document
+                        .getElementById("orderNotes")
+                        .value
+                        .trim()
             };
-                        try {
 
-                const response = await fetch(
-                    "/api/orders",
-                    {
-                        method: "POST",
 
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
+            try {
 
-                        body: JSON.stringify(orderData)
-                    }
-                );
+                const response =
+                    await fetch(
+                        "/api/orders",
+                        {
+                            method: "POST",
 
-                const data = await response.json();
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
 
-                if (!response.ok || !data.success) {
+                            body:
+                                JSON.stringify(
+                                    orderData
+                                )
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    !response.ok ||
+                    !data.success
+                ) {
+
                     alert(
                         data.message ||
                         "Η παραγγελία δεν αποθηκεύτηκε."
                     );
+
                     return;
                 }
 
-                alert("Η παραγγελία αποθηκεύτηκε επιτυχώς.");
+
+                /*
+                   Αποθηκεύουμε το ID της
+                   παραγγελίας που μόλις δημιουργήθηκε.
+                */
+
+                lastSavedOrderId =
+                    data.order_id;
+
+
+                alert(
+                    "Η παραγγελία αποθηκεύτηκε επιτυχώς."
+                );
+
 
                 await loadTodayOrdersCount();
-                            } catch (error) {
+
+                if (
+                    typeof loadTodayOrders ===
+                    "function"
+                ) {
+                    await loadTodayOrders();
+                }
+
+            } catch (error) {
 
                 console.error(
                     "Σφάλμα αποθήκευσης παραγγελίας:",
@@ -105,6 +204,110 @@ const saveOrderBtn =
 
                 alert(
                     "Παρουσιάστηκε σφάλμα κατά την αποθήκευση."
+                );
+            }
+        }
+    );
+}
+
+
+/* =========================================
+   ΑΠΟΣΤΟΛΗ ΣΤΟΝ ΟΔΗΓΟ
+========================================= */
+
+if (sendToDriverBtn) {
+
+    sendToDriverBtn.addEventListener(
+        "click",
+        async () => {
+
+            /*
+               Πρέπει πρώτα να έχει αποθηκευτεί
+               η παραγγελία.
+            */
+
+            if (!lastSavedOrderId) {
+
+                alert(
+                    "Πρώτα πάτησε «Αποθήκευση παραγγελίας»."
+                );
+
+                return;
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `/api/orders/${lastSavedOrderId}/send-to-driver`,
+                        {
+                            method: "POST"
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    !response.ok ||
+                    !data.success
+                ) {
+
+                    alert(
+                        data.message ||
+                        "Η παραγγελία δεν στάλθηκε στον οδηγό."
+                    );
+
+                    return;
+                }
+
+
+                alert(
+                    "Η παραγγελία πέρασε σε διανομή."
+                );
+
+
+                /*
+                   Ανανεώνουμε τις λίστες
+                   και τους μετρητές.
+                */
+
+                await loadTodayOrdersCount();
+
+                if (
+                    typeof loadTodayOrders ===
+                    "function"
+                ) {
+                    await loadTodayOrders();
+                }
+
+                if (
+                    typeof loadInDeliveryOrders ===
+                    "function"
+                ) {
+                    await loadInDeliveryOrders();
+                }
+
+
+                /*
+                   Δεν επιτρέπουμε δεύτερη αποστολή
+                   της ίδιας παραγγελίας.
+                */
+
+                lastSavedOrderId = null;
+
+            } catch (error) {
+
+                console.error(
+                    "Σφάλμα αποστολής στον οδηγό:",
+                    error
+                );
+
+                alert(
+                    "Παρουσιάστηκε σφάλμα κατά την αποστολή στον οδηγό."
                 );
             }
         }

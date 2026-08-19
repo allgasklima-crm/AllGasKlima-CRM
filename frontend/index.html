@@ -731,11 +731,12 @@
                     </button>
 
                         <button
-                            type="button"
-                            class="btn btn-success"
-                        >
-                            Αποστολή στον οδηγό
-                        </button>
+                    type="button"
+                    id="sendToDriverBtn"
+                    class="btn btn-success"
+>
+                    Αποστολή στον οδηγό
+                    </button>
 
                     </div>
 
@@ -855,15 +856,15 @@
     <strong id="todayOrdersCount">0</strong>
 </div>
 
-            <div class="summary-card">
-                <span>Σε διανομή</span>
-                <strong>0</strong>
-            </div>
+            <div class="summary-card" id="inDeliveryCard">
+        <span>Σε διανομή</span>
+        <strong id="inDeliveryCount">0</strong>
+        </div>
 
-            <div class="summary-card">
-                <span>Ολοκληρωμένες</span>
-                <strong>0</strong>
-            </div>
+        <div class="summary-card" id="completedOrdersCard">
+        <span>Ολοκληρωμένες</span>
+        <strong id="completedOrdersCount">0</strong>
+            </div>  
 
         </section>
 
@@ -974,7 +975,6 @@
 
 </div>
 
-</div>
 
 <!-- ΚΛΗΣΕΙΣ ΣΗΜΕΡΑ -->
 <div id="todayCallsModal" class="directory-modal hidden">
@@ -1016,8 +1016,52 @@
 
 </div>
 
+<!-- ΣΕ ΔΙΑΝΟΜΗ -->
+<div id="inDeliveryModal" class="directory-modal hidden">
+
+    <div class="directory-window">
+
+        <div class="directory-header">
+            <div>
+                <span class="section-kicker">ΠΑΡΑΓΓΕΛΙΕΣ</span>
+                <h2>Σε διανομή</h2>
+            </div>
+
+            <button
+                type="button"
+                id="closeInDeliveryBtn"
+                class="directory-close"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="directory-table-wrap">
+            <table class="directory-table">
+                <thead>
+                    <tr>
+                        <th>Α/Α</th>
+                        <th>Ώρα</th>
+                        <th>Πελάτης</th>
+                        <th>Τηλέφωνο</th>
+                        <th>Περιοχή</th>
+                        <th>Διεύθυνση</th>
+                        <th>Παραγγελία</th>
+                        <th>Κατάσταση</th>
+                    </tr>
+                </thead>
+
+                <tbody id="inDeliveryBody">
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+
 <script src="js/ui.js"></script>
-<<script src="js/ui.js"></script>
 <script src="js/customers.js"></script>
 <script src="js/orders.js"></script>
 <script src="js/calls.js"></script>

@@ -38,7 +38,7 @@ def get_connection():
 
 
 # =========================================================
-# ΙΣΤΟΡΙΚΟ ΚΛΗΣΕΩΝ - ΔΗΜΙΟΥΡΓΙΑ / ΕΝΗΜΕΡΩΣΗ ΠΙΝΑΚΑ
+# ΙΣΤΟΡΙΚΟ ΚΛΗΣΕΩΝ
 # =========================================================
 
 def create_call_history_table():
@@ -79,9 +79,6 @@ def create_call_history_table():
 
 # =========================================================
 # ΠΕΔΙΑ ΦΙΑΛΩΝ ΠΕΛΑΤΗ
-#
-# Προσθέτει αυτόματα τις νέες στήλες στον υπάρχοντα
-# πίνακα customers χωρίς να σβήνει παλιούς πελάτες.
 # =========================================================
 
 def create_customer_cylinder_columns():
@@ -95,51 +92,21 @@ def create_customer_cylinder_columns():
     ]
 
     cylinder_columns = {
-        "cylinder_screw": (
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        "cylinder_clip": (
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        "cylinder_3kg": (
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        "cylinder_10_mix": (
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        "cylinder_10_propane": (
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        "cylinder_13kg": (
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        "cylinder_25kg": (
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        "cylinder_barrel": (
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        "cylinder_short": (
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        "cylinder_tall": (
-            "INTEGER NOT NULL DEFAULT 0"
-        )
+        "cylinder_screw": "INTEGER NOT NULL DEFAULT 0",
+        "cylinder_clip": "INTEGER NOT NULL DEFAULT 0",
+        "cylinder_3kg": "INTEGER NOT NULL DEFAULT 0",
+        "cylinder_10_mix": "INTEGER NOT NULL DEFAULT 0",
+        "cylinder_10_propane": "INTEGER NOT NULL DEFAULT 0",
+        "cylinder_13kg": "INTEGER NOT NULL DEFAULT 0",
+        "cylinder_25kg": "INTEGER NOT NULL DEFAULT 0",
+        "cylinder_barrel": "INTEGER NOT NULL DEFAULT 0",
+        "cylinder_short": "INTEGER NOT NULL DEFAULT 0",
+        "cylinder_tall": "INTEGER NOT NULL DEFAULT 0"
     }
 
     for column_name, column_definition in cylinder_columns.items():
 
         if column_name not in columns:
-
             connection.execute(
                 f"""
                 ALTER TABLE customers
@@ -153,15 +120,39 @@ def create_customer_cylinder_columns():
 
 
 # =========================================================
-# ΒΟΗΘΗΤΙΚΗ ΣΥΝΑΡΤΗΣΗ BOOLEAN
+# STATUS ΠΑΡΑΓΓΕΛΙΑΣ
+# =========================================================
+
+def create_order_status_column():
+    connection = get_connection()
+
+    columns = connection.execute(
+        "PRAGMA table_info(orders)"
+    ).fetchall()
+
+    column_names = [
+        column["name"]
+        for column in columns
+    ]
+
+    if "status" not in column_names:
+        connection.execute(
+            """
+            ALTER TABLE orders
+            ADD COLUMN status TEXT DEFAULT 'new'
+            """
+        )
+
+        connection.commit()
+
+    connection.close()
+
+
+# =========================================================
+# BOOLEAN CHECKBOX
 # =========================================================
 
 def checkbox_value(data, key):
-    """
-    Μετατρέπει την τιμή checkbox σε 0 ή 1
-    για αποθήκευση στη SQLite.
-    """
-
     value = data.get(
         key,
         False
@@ -203,7 +194,7 @@ def get_customer_by_phone(phone):
         (
             phone,
             phone,
-            phone,
+            phone
         )
     ).fetchone()
 
@@ -229,7 +220,6 @@ def make_call_response(call_row):
 
     return {
         "id": call_row["id"],
-
         "phone": phone,
 
         "date": called_at.strftime(
@@ -257,7 +247,7 @@ def make_call_response(call_row):
 
 
 # =========================================================
-# ΑΡΧΙΚΗ ΣΕΛΙΔΑ
+# ΑΡΧΙΚΗ
 # =========================================================
 
 @app.route("/")
@@ -269,11 +259,11 @@ def index():
 
 
 # =========================================================
-# ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ
+# ΕΥΡΕΤΗΡΙΟ ΠΕΛΑΤΩΝ
 # =========================================================
+
 @app.get("/api/customers")
 def get_customers():
-
     connection = get_connection()
 
     customers = connection.execute(
@@ -295,11 +285,18 @@ def get_customers():
 
     return jsonify({
         "success": True,
+
         "customers": [
             dict(customer)
             for customer in customers
         ]
     })
+
+
+# =========================================================
+# ΔΙΑΓΡΑΦΗ ΠΕΛΑΤΗ
+# =========================================================
+
 @app.delete("/api/customer/<int:customer_id>")
 def delete_customer(customer_id):
     connection = get_connection()
@@ -310,7 +307,9 @@ def delete_customer(customer_id):
         FROM customers
         WHERE id = ?
         """,
-        (customer_id,)
+        (
+            customer_id,
+        )
     ).fetchone()
 
     if customer is None:
@@ -326,7 +325,9 @@ def delete_customer(customer_id):
         DELETE FROM customers
         WHERE id = ?
         """,
-        (customer_id,)
+        (
+            customer_id,
+        )
     )
 
     connection.commit()
@@ -336,6 +337,12 @@ def delete_customer(customer_id):
         "success": True,
         "message": "Ο πελάτης διαγράφηκε επιτυχώς."
     })
+
+
+# =========================================================
+# ΑΝΑΖΗΤΗΣΗ ΠΕΛΑΤΗ
+# =========================================================
+
 @app.get("/api/customer")
 def find_customer():
     search_text = request.args.get(
@@ -352,57 +359,48 @@ def find_customer():
             )
         }), 400
 
-    # =====================================================
-    # 1. ΠΡΩΤΑ ΕΛΕΓΧΟΥΜΕ ΑΚΡΙΒΗ ΤΑΥΤΙΣΗ ΤΗΛΕΦΩΝΟΥ
-    # =====================================================
-
     customer = get_customer_by_phone(
         search_text
     )
 
     if customer is not None:
-     return jsonify({
-        "success": True,
-        "found": True,
-        "multiple": False,
-        "customer": dict(customer)
-    })
-    # =====================================================
-    # 2. ΓΕΝΙΚΗ ΧΕΙΡΟΚΙΝΗΤΗ ΑΝΑΖΗΤΗΣΗ
-    # =====================================================
+        return jsonify({
+            "success": True,
+            "found": True,
+            "multiple": False,
+            "customer": dict(customer)
+        })
 
     connection = get_connection()
 
-    search_like = f"%{search_text}%"
+    search_like = (
+        f"%{search_text}%"
+    )
 
     customers = connection.execute(
-    """
-    SELECT *
-    FROM customers
-    WHERE fullname LIKE ?
-       OR phone1 LIKE ?
-       OR phone2 LIKE ?
-       OR phone3 LIKE ?
-       OR area LIKE ?
-       OR address LIKE ?
-    ORDER BY fullname ASC
-    LIMIT 20
-    """,
-    (
-        search_like,
-        search_like,
-        search_like,
-        search_like,
-        search_like,
-        search_like,
-    )
-).fetchall()
+        """
+        SELECT *
+        FROM customers
+        WHERE fullname LIKE ?
+           OR phone1 LIKE ?
+           OR phone2 LIKE ?
+           OR phone3 LIKE ?
+           OR area LIKE ?
+           OR address LIKE ?
+        ORDER BY fullname ASC
+        LIMIT 20
+        """,
+        (
+            search_like,
+            search_like,
+            search_like,
+            search_like,
+            search_like,
+            search_like
+        )
+    ).fetchall()
 
     connection.close()
-
-    # =====================================================
-    # ΚΑΝΕΝΑ ΑΠΟΤΕΛΕΣΜΑ
-    # =====================================================
 
     if len(customers) == 0:
         return jsonify({
@@ -411,10 +409,6 @@ def find_customer():
             "multiple": False,
             "search_text": search_text
         })
-
-    # =====================================================
-    # ΕΝΑΣ ΠΕΛΑΤΗΣ
-    # =====================================================
 
     if len(customers) == 1:
         return jsonify({
@@ -426,19 +420,17 @@ def find_customer():
             )
         })
 
-    # =====================================================
-# ΠΕΡΙΣΣΟΤΕΡΟΙ ΑΠΟ ΕΝΑΣ
-# =====================================================
-
     return jsonify({
-    "success": True,
-    "found": False,
-    "multiple": True,
-    "message": (
-        "Βρέθηκαν περισσότεροι πελάτες. "
-        "Γράψε τηλέφωνο ή πιο συγκεκριμένα στοιχεία."
-    )
-})
+        "success": True,
+        "found": False,
+        "multiple": True,
+
+        "message": (
+            "Βρέθηκαν περισσότεροι πελάτες. "
+            "Γράψε τηλέφωνο ή πιο συγκεκριμένα στοιχεία."
+        )
+    })
+
 
 # =========================================================
 # ΔΗΜΙΟΥΡΓΙΑ ΝΕΟΥ ΠΕΛΑΤΗ
@@ -446,15 +438,9 @@ def find_customer():
 
 @app.post("/api/customer")
 def create_customer():
-
     data = request.get_json(
         silent=True
     ) or {}
-
-
-    # -----------------------------------------------------
-    # ΒΑΣΙΚΑ ΣΤΟΙΧΕΙΑ
-    # -----------------------------------------------------
 
     fullname = str(
         data.get(
@@ -463,14 +449,12 @@ def create_customer():
         )
     ).strip()
 
-
     phone1 = str(
         data.get(
             "phone1",
             ""
         )
     ).strip()
-
 
     phone2 = str(
         data.get(
@@ -479,14 +463,12 @@ def create_customer():
         )
     ).strip()
 
-
     phone3 = str(
         data.get(
             "phone3",
             ""
         )
     ).strip()
-
 
     area = str(
         data.get(
@@ -495,14 +477,12 @@ def create_customer():
         )
     ).strip()
 
-
     address = str(
         data.get(
             "address",
             ""
         )
     ).strip()
-
 
     floor = str(
         data.get(
@@ -511,18 +491,12 @@ def create_customer():
         )
     ).strip()
 
-
     notes = str(
         data.get(
             "notes",
             ""
         )
     ).strip()
-
-
-    # -----------------------------------------------------
-    # ΦΙΑΛΕΣ ΠΟΥ ΧΡΗΣΙΜΟΠΟΙΕΙ Ο ΠΕΛΑΤΗΣ
-    # -----------------------------------------------------
 
     cylinder_screw = checkbox_value(
         data,
@@ -574,47 +548,27 @@ def create_customer():
         "cylinder_tall"
     )
 
-
-    # -----------------------------------------------------
-    # ΕΛΕΓΧΟΣ ΟΝΟΜΑΤΟΣ
-    # -----------------------------------------------------
-
     if not fullname:
-
         return jsonify({
             "success": False,
-
             "message": (
                 "Το ονοματεπώνυμο είναι υποχρεωτικό."
             )
         }), 400
 
-
-    # -----------------------------------------------------
-    # ΕΛΕΓΧΟΣ ΤΗΛΕΦΩΝΟΥ
-    # -----------------------------------------------------
-
     if not phone1:
-
         return jsonify({
             "success": False,
-
             "message": (
                 "Το κύριο τηλέφωνο είναι υποχρεωτικό."
             )
         }), 400
-
-
-    # -----------------------------------------------------
-    # ΕΛΕΓΧΟΣ ΑΝ ΥΠΑΡΧΕΙ ΗΔΗ
-    # -----------------------------------------------------
 
     existing_customer = get_customer_by_phone(
         phone1
     )
 
     if existing_customer is not None:
-
         return jsonify({
             "success": False,
 
@@ -624,45 +578,31 @@ def create_customer():
             )
         }), 409
 
-
-    # -----------------------------------------------------
-    # ΑΠΟΘΗΚΕΥΣΗ
-    # -----------------------------------------------------
-
     connection = get_connection()
 
     try:
-
         cursor = connection.execute(
             """
             INSERT INTO customers (
-
                 fullname,
-
                 phone1,
                 phone2,
                 phone3,
-
                 area,
                 address,
                 floor,
                 notes,
-
                 cylinder_screw,
                 cylinder_clip,
-
                 cylinder_3kg,
                 cylinder_10_mix,
                 cylinder_10_propane,
                 cylinder_13kg,
                 cylinder_25kg,
-
                 cylinder_barrel,
                 cylinder_short,
                 cylinder_tall
-
             )
-
             VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
@@ -670,25 +610,20 @@ def create_customer():
             """,
             (
                 fullname,
-
                 phone1,
                 phone2 or None,
                 phone3 or None,
-
                 area or None,
                 address or None,
                 floor or None,
                 notes or None,
-
                 cylinder_screw,
                 cylinder_clip,
-
                 cylinder_3kg,
                 cylinder_10_mix,
                 cylinder_10_propane,
                 cylinder_13kg,
                 cylinder_25kg,
-
                 cylinder_barrel,
                 cylinder_short,
                 cylinder_tall
@@ -697,7 +632,9 @@ def create_customer():
 
         connection.commit()
 
-        customer_id = cursor.lastrowid
+        customer_id = (
+            cursor.lastrowid
+        )
 
         customer = connection.execute(
             """
@@ -710,9 +647,7 @@ def create_customer():
             )
         ).fetchone()
 
-
     except sqlite3.IntegrityError:
-
         connection.close()
 
         return jsonify({
@@ -724,9 +659,7 @@ def create_customer():
             )
         }), 409
 
-
     connection.close()
-
 
     return jsonify({
         "success": True,
@@ -740,22 +673,14 @@ def create_customer():
 
 
 # =========================================================
-# ΕΝΗΜΕΡΩΣΗ ΥΠΑΡΧΟΝΤΟΣ ΠΕΛΑΤΗ
+# ΕΝΗΜΕΡΩΣΗ ΠΕΛΑΤΗ
 # =========================================================
 
-@app.put(
-    "/api/customer/<int:customer_id>"
-)
+@app.put("/api/customer/<int:customer_id>")
 def update_customer(customer_id):
-
     data = request.get_json(
         silent=True
     ) or {}
-
-
-    # -----------------------------------------------------
-    # ΒΑΣΙΚΑ ΣΤΟΙΧΕΙΑ
-    # -----------------------------------------------------
 
     fullname = str(
         data.get(
@@ -764,14 +689,12 @@ def update_customer(customer_id):
         )
     ).strip()
 
-
     phone1 = str(
         data.get(
             "phone1",
             ""
         )
     ).strip()
-
 
     phone2 = str(
         data.get(
@@ -780,14 +703,12 @@ def update_customer(customer_id):
         )
     ).strip()
 
-
     phone3 = str(
         data.get(
             "phone3",
             ""
         )
     ).strip()
-
 
     area = str(
         data.get(
@@ -796,14 +717,12 @@ def update_customer(customer_id):
         )
     ).strip()
 
-
     address = str(
         data.get(
             "address",
             ""
         )
     ).strip()
-
 
     floor = str(
         data.get(
@@ -812,18 +731,12 @@ def update_customer(customer_id):
         )
     ).strip()
 
-
     notes = str(
         data.get(
             "notes",
             ""
         )
     ).strip()
-
-
-    # -----------------------------------------------------
-    # ΦΙΑΛΕΣ ΠΟΥ ΧΡΗΣΙΜΟΠΟΙΕΙ Ο ΠΕΛΑΤΗΣ
-    # -----------------------------------------------------
 
     cylinder_screw = checkbox_value(
         data,
@@ -875,13 +788,7 @@ def update_customer(customer_id):
         "cylinder_tall"
     )
 
-
-    # -----------------------------------------------------
-    # ΕΛΕΓΧΟΣ
-    # -----------------------------------------------------
-
     if not fullname:
-
         return jsonify({
             "success": False,
 
@@ -890,9 +797,7 @@ def update_customer(customer_id):
             )
         }), 400
 
-
     if not phone1:
-
         return jsonify({
             "success": False,
 
@@ -901,13 +806,7 @@ def update_customer(customer_id):
             )
         }), 400
 
-
     connection = get_connection()
-
-
-    # -----------------------------------------------------
-    # ΕΛΕΓΧΟΥΜΕ ΟΤΙ ΥΠΑΡΧΕΙ
-    # -----------------------------------------------------
 
     customer = connection.execute(
         """
@@ -921,89 +820,63 @@ def update_customer(customer_id):
         )
     ).fetchone()
 
-
     if customer is None:
-
         connection.close()
 
         return jsonify({
             "success": False,
-
-            "message": (
-                "Ο πελάτης δεν βρέθηκε."
-            )
+            "message": "Ο πελάτης δεν βρέθηκε."
         }), 404
 
-
-    # -----------------------------------------------------
-    # UPDATE
-    # -----------------------------------------------------
-
     try:
-
         connection.execute(
             """
             UPDATE customers
-
             SET
-
                 fullname = ?,
-
                 phone1 = ?,
                 phone2 = ?,
                 phone3 = ?,
-
                 area = ?,
                 address = ?,
                 floor = ?,
                 notes = ?,
-
                 cylinder_screw = ?,
                 cylinder_clip = ?,
-
                 cylinder_3kg = ?,
                 cylinder_10_mix = ?,
                 cylinder_10_propane = ?,
                 cylinder_13kg = ?,
                 cylinder_25kg = ?,
-
                 cylinder_barrel = ?,
                 cylinder_short = ?,
                 cylinder_tall = ?
-
             WHERE id = ?
             """,
             (
                 fullname,
-
                 phone1,
                 phone2 or None,
                 phone3 or None,
-
                 area or None,
                 address or None,
                 floor or None,
                 notes or None,
-
                 cylinder_screw,
                 cylinder_clip,
-
                 cylinder_3kg,
                 cylinder_10_mix,
                 cylinder_10_propane,
                 cylinder_13kg,
                 cylinder_25kg,
-
                 cylinder_barrel,
                 cylinder_short,
                 cylinder_tall,
-
                 customer_id
             )
         )
 
         connection.commit()
-
 
         customer = connection.execute(
             """
@@ -1017,9 +890,7 @@ def update_customer(customer_id):
             )
         ).fetchone()
 
-
     except sqlite3.IntegrityError:
-
         connection.close()
 
         return jsonify({
@@ -1031,9 +902,7 @@ def update_customer(customer_id):
             )
         }), 409
 
-
     connection.close()
-
 
     return jsonify({
         "success": True,
@@ -1053,11 +922,9 @@ def update_customer(customer_id):
 
 @app.post("/api/incoming-call")
 def incoming_call():
-
     data = request.get_json(
         silent=True
     ) or {}
-
 
     phone = str(
         data.get(
@@ -1066,23 +933,15 @@ def incoming_call():
         )
     ).strip()
 
-
     if not phone:
-
         return jsonify({
             "success": False,
-
-            "message": (
-                "Δεν δόθηκε αριθμός."
-            )
+            "message": "Δεν δόθηκε αριθμός."
         }), 400
-
 
     now = datetime.now().astimezone()
 
-
     connection = get_connection()
-
 
     cursor = connection.execute(
         """
@@ -1098,12 +957,11 @@ def incoming_call():
         )
     )
 
-
     connection.commit()
 
-
-    call_id = cursor.lastrowid
-
+    call_id = (
+        cursor.lastrowid
+    )
 
     call_row = connection.execute(
         """
@@ -1116,22 +974,17 @@ def incoming_call():
         )
     ).fetchone()
 
-
     connection.close()
-
 
     call_data = make_call_response(
         call_row
     )
 
-
     customer = get_customer_by_phone(
         phone
     )
 
-
     if customer is not None:
-
         print(
             f"📞 {call_data['date']} "
             f"{call_data['time']} - "
@@ -1139,17 +992,12 @@ def incoming_call():
             f"{customer['fullname']}"
         )
 
-
         return jsonify({
             "success": True,
-
             "found": True,
-
             "call": call_data,
-
             "customer": dict(customer)
         }), 201
-
 
     print(
         f"📞 {call_data['date']} "
@@ -1157,14 +1005,10 @@ def incoming_call():
         f"Άγνωστος αριθμός: {phone}"
     )
 
-
     return jsonify({
         "success": True,
-
         "found": False,
-
         "call": call_data,
-
         "phone": phone
     }), 201
 
@@ -1175,9 +1019,7 @@ def incoming_call():
 
 @app.get("/api/latest-call")
 def get_latest_call():
-
     connection = get_connection()
-
 
     call_row = connection.execute(
         """
@@ -1188,22 +1030,16 @@ def get_latest_call():
         """
     ).fetchone()
 
-
     connection.close()
 
-
     if call_row is None:
-
         return jsonify({
             "success": True,
-
             "has_call": False
         })
 
-
     return jsonify({
         "success": True,
-
         "has_call": True,
 
         "call": make_call_response(
@@ -1218,24 +1054,18 @@ def get_latest_call():
 
 @app.get("/api/calls")
 def get_call_history():
-
     limit_text = request.args.get(
         "limit",
         "50"
     )
 
-
     try:
-
         limit = int(
             limit_text
         )
 
-
     except ValueError:
-
         limit = 50
-
 
     limit = max(
         1,
@@ -1245,9 +1075,7 @@ def get_call_history():
         )
     )
 
-
     connection = get_connection()
-
 
     call_rows = connection.execute(
         """
@@ -1261,9 +1089,7 @@ def get_call_history():
         )
     ).fetchall()
 
-
     connection.close()
-
 
     calls = [
         make_call_response(
@@ -1272,10 +1098,8 @@ def get_call_history():
         for call_row in call_rows
     ]
 
-
     return jsonify({
         "success": True,
-
         "calls": calls
     })
 
@@ -1284,13 +1108,9 @@ def get_call_history():
 # ΔΙΑΓΡΑΦΗ ΜΙΑΣ ΚΛΗΣΗΣ
 # =========================================================
 
-@app.delete(
-    "/api/calls/<int:call_id>"
-)
+@app.delete("/api/calls/<int:call_id>")
 def delete_call(call_id):
-
     connection = get_connection()
-
 
     cursor = connection.execute(
         """
@@ -1303,28 +1123,19 @@ def delete_call(call_id):
         )
     )
 
-
     connection.commit()
-
 
     deleted = (
         cursor.rowcount > 0
     )
 
-
     connection.close()
 
-
     if not deleted:
-
         return jsonify({
             "success": False,
-
-            "message": (
-                "Η κλήση δεν βρέθηκε."
-            )
+            "message": "Η κλήση δεν βρέθηκε."
         }), 404
-
 
     return jsonify({
         "success": True,
@@ -1337,16 +1148,12 @@ def delete_call(call_id):
 
 
 # =========================================================
-# ΕΠΑΝΑΦΟΡΑ ΔΙΑΓΡΑΜΜΕΝΗΣ ΚΛΗΣΗΣ
+# ΕΠΑΝΑΦΟΡΑ ΚΛΗΣΗΣ
 # =========================================================
 
-@app.post(
-    "/api/calls/<int:call_id>/restore"
-)
+@app.post("/api/calls/<int:call_id>/restore")
 def restore_call(call_id):
-
     connection = get_connection()
-
 
     cursor = connection.execute(
         """
@@ -1359,36 +1166,25 @@ def restore_call(call_id):
         )
     )
 
-
     connection.commit()
-
 
     restored = (
         cursor.rowcount > 0
     )
 
-
     connection.close()
 
-
     if not restored:
-
         return jsonify({
             "success": False,
-
-            "message": (
-                "Η κλήση δεν βρέθηκε."
-            )
+            "message": "Η κλήση δεν βρέθηκε."
         }), 404
-
 
     return jsonify({
         "success": True,
-
-        "message": (
-            "Η κλήση επαναφέρθηκε."
-        )
+        "message": "Η κλήση επαναφέρθηκε."
     })
+
 
 # =========================================================
 # ΑΠΟΘΗΚΕΥΣΗ ΠΑΡΑΓΓΕΛΙΑΣ
@@ -1396,23 +1192,54 @@ def restore_call(call_id):
 
 @app.post("/api/orders")
 def save_order():
+    data = request.get_json(
+        silent=True
+    ) or {}
 
-    data = request.get_json(silent=True) or {}
+    fullname = str(
+        data.get("fullname") or ""
+    ).strip()
 
-    fullname = str(data.get("fullname") or "").strip()
-    phone1 = str(data.get("phone1") or "").strip()
-    phone2 = str(data.get("phone2") or "").strip()
-    phone3 = str(data.get("phone3") or "").strip()
-    area = str(data.get("area") or "").strip()
-    address = str(data.get("address") or "").strip()
-    floor = str(data.get("floor") or "").strip()
-    notes = str(data.get("notes") or "").strip()
-    order_notes = str(data.get("order_notes") or "").strip()
+    phone1 = str(
+        data.get("phone1") or ""
+    ).strip()
+
+    phone2 = str(
+        data.get("phone2") or ""
+    ).strip()
+
+    phone3 = str(
+        data.get("phone3") or ""
+    ).strip()
+
+    area = str(
+        data.get("area") or ""
+    ).strip()
+
+    address = str(
+        data.get("address") or ""
+    ).strip()
+
+    floor = str(
+        data.get("floor") or ""
+    ).strip()
+
+    notes = str(
+        data.get("notes") or ""
+    ).strip()
+
+    order_notes = str(
+        data.get("order_notes") or ""
+    ).strip()
 
     if not fullname or not phone1:
         return jsonify({
             "success": False,
-            "message": "Χρειάζονται ονοματεπώνυμο και κύριο τηλέφωνο."
+
+            "message": (
+                "Χρειάζονται ονοματεπώνυμο "
+                "και κύριο τηλέφωνο."
+            )
         }), 400
 
     connection = get_connection()
@@ -1464,13 +1291,15 @@ def save_order():
             return_13kg,
             return_25kg,
 
-            order_notes
+            order_notes,
+            status
         )
         VALUES (
             ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?,
-            ?
+            ?,
+            'new'
         )
         """,
         (
@@ -1484,17 +1313,65 @@ def save_order():
             floor,
             notes,
 
-            int(data.get("delivery_3kg") or 0),
-            int(data.get("delivery_10kg_mix") or 0),
-            int(data.get("delivery_10kg_propane") or 0),
-            int(data.get("delivery_13kg") or 0),
-            int(data.get("delivery_25kg") or 0),
+            int(
+                data.get(
+                    "delivery_3kg"
+                ) or 0
+            ),
 
-            int(data.get("return_3kg") or 0),
-            int(data.get("return_10kg_mix") or 0),
-            int(data.get("return_10kg_propane") or 0),
-            int(data.get("return_13kg") or 0),
-            int(data.get("return_25kg") or 0),
+            int(
+                data.get(
+                    "delivery_10kg_mix"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "delivery_10kg_propane"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "delivery_13kg"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "delivery_25kg"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "return_3kg"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "return_10kg_mix"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "return_10kg_propane"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "return_13kg"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "return_25kg"
+                ) or 0
+            ),
 
             order_notes
         )
@@ -1502,7 +1379,9 @@ def save_order():
 
     connection.commit()
 
-    order_id = cursor.lastrowid
+    order_id = (
+        cursor.lastrowid
+    )
 
     connection.close()
 
@@ -1511,21 +1390,31 @@ def save_order():
         "order_id": order_id,
         "message": "Η παραγγελία αποθηκεύτηκε."
     })
+
+
 # =========================================================
 # ΠΛΗΘΟΣ ΣΗΜΕΡΙΝΩΝ ΠΑΡΑΓΓΕΛΙΩΝ
 # =========================================================
 
 @app.get("/api/orders/today-count")
 def get_today_orders_count():
-
     connection = get_connection()
 
     row = connection.execute(
         """
         SELECT COUNT(*) AS total
         FROM orders
-        WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
-        AND COALESCE(status, 'new') != 'cleared'
+        WHERE DATE(
+            created_at,
+            'localtime'
+        ) = DATE(
+            'now',
+            'localtime'
+        )
+        AND COALESCE(
+            status,
+            'new'
+        ) != 'cleared'
         """
     ).fetchone()
 
@@ -1533,15 +1422,20 @@ def get_today_orders_count():
 
     return jsonify({
         "success": True,
-        "count": row["total"] if row else 0
+        "count": (
+            row["total"]
+            if row
+            else 0
+        )
     })
+
+
 # =========================================================
-# ΛΙΣΤΑ ΣΗΜΕΡΙΝΩΝ ΠΑΡΑΓΓΕΛΙΩΝ
+# ΣΗΜΕΡΙΝΕΣ ΠΑΡΑΓΓΕΛΙΕΣ
 # =========================================================
 
 @app.get("/api/orders/today")
 def get_today_orders():
-
     connection = get_connection()
 
     rows = connection.execute(
@@ -1561,9 +1455,18 @@ def get_today_orders():
             status,
             created_at
         FROM orders
-        WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
-  AND COALESCE(status, 'new') != 'cleared'
-ORDER BY created_at DESC
+        WHERE DATE(
+            created_at,
+            'localtime'
+        ) = DATE(
+            'now',
+            'localtime'
+        )
+        AND COALESCE(
+            status,
+            'new'
+        ) != 'cleared'
+        ORDER BY created_at DESC
         """
     ).fetchall()
 
@@ -1578,14 +1481,30 @@ ORDER BY created_at DESC
             "phone1": row["phone1"],
             "area": row["area"],
             "address": row["address"],
-            "delivery_3kg": row["delivery_3kg"],
-            "delivery_10kg_mix": row["delivery_10kg_mix"],
-            "delivery_10kg_propane": row["delivery_10kg_propane"],
-            "delivery_13kg": row["delivery_13kg"],
-            "delivery_25kg": row["delivery_25kg"],
-            "order_notes": row["order_notes"],
-            "status": row["status"],
-            "created_at": row["created_at"]
+
+            "delivery_3kg":
+                row["delivery_3kg"],
+
+            "delivery_10kg_mix":
+                row["delivery_10kg_mix"],
+
+            "delivery_10kg_propane":
+                row["delivery_10kg_propane"],
+
+            "delivery_13kg":
+                row["delivery_13kg"],
+
+            "delivery_25kg":
+                row["delivery_25kg"],
+
+            "order_notes":
+                row["order_notes"],
+
+            "status":
+                row["status"],
+
+            "created_at":
+                row["created_at"]
         })
 
     return jsonify({
@@ -1593,58 +1512,67 @@ ORDER BY created_at DESC
         "orders": orders
     })
 
-def create_order_status_column():
-    connection = get_connection()
 
-    columns = connection.execute(
-        "PRAGMA table_info(orders)"
-    ).fetchall()
-
-    column_names = [column["name"] for column in columns]
-
-    if "status" not in column_names:
-        connection.execute(
-            "ALTER TABLE orders ADD COLUMN status TEXT DEFAULT 'new'"
-        )
-        connection.commit()
-
-    connection.close()
-    # =========================================================
-# ΚΑΘΑΡΙΣΜΟΣ ΟΛΩΝ ΤΩΝ ΣΗΜΕΡΙΝΩΝ ΠΑΡΑΓΓΕΛΙΩΝ
-# ΧΩΡΙΣ ΔΙΑΓΡΑΦΗ ΑΠΟ ΤΟ ΙΣΤΟΡΙΚΟ
+# =========================================================
+# ΑΠΟΣΤΟΛΗ ΣΤΟΝ ΟΔΗΓΟ
 # =========================================================
 
-@app.post("/api/orders/today/clear")
-def clear_today_orders():
-
+@app.post(
+    "/api/orders/<int:order_id>/send-to-driver"
+)
+def send_order_to_driver(order_id):
     connection = get_connection()
 
-    cursor = connection.execute(
+    order = connection.execute(
+        """
+        SELECT id
+        FROM orders
+        WHERE id = ?
+        """,
+        (
+            order_id,
+        )
+    ).fetchone()
+
+    if not order:
+        connection.close()
+
+        return jsonify({
+            "success": False,
+            "message": "Η παραγγελία δεν βρέθηκε."
+        }), 404
+
+    connection.execute(
         """
         UPDATE orders
-        SET status = 'cleared'
-        WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
-          AND COALESCE(status, 'new') != 'cleared'
-        """
+        SET status = 'in_delivery'
+        WHERE id = ?
+        """,
+        (
+            order_id,
+        )
     )
 
     connection.commit()
-    cleared = cursor.rowcount
     connection.close()
 
     return jsonify({
         "success": True,
-        "cleared": cleared
-    })     
-    
 
-    # =========================================================
-# ΟΛΟΚΛΗΡΩΣΗ ΜΙΑΣ ΠΑΡΑΓΓΕΛΙΑΣ
+        "message": (
+            "Η παραγγελία πέρασε σε διανομή."
+        )
+    })
+
+
+# =========================================================
+# ΟΛΟΚΛΗΡΩΣΗ ΠΑΡΑΓΓΕΛΙΑΣ
 # =========================================================
 
-@app.post("/api/orders/<int:order_id>/complete")
+@app.post(
+    "/api/orders/<int:order_id>/complete"
+)
 def complete_order(order_id):
-
     connection = get_connection()
 
     cursor = connection.execute(
@@ -1653,7 +1581,9 @@ def complete_order(order_id):
         SET status = 'completed'
         WHERE id = ?
         """,
-        (order_id,)
+        (
+            order_id,
+        )
     )
 
     connection.commit()
@@ -1664,17 +1594,53 @@ def complete_order(order_id):
         "updated": cursor.rowcount
     })
 
-    
 
-    
+# =========================================================
+# ΚΑΘΑΡΙΣΜΟΣ ΣΗΜΕΡΙΝΩΝ ΠΑΡΑΓΓΕΛΙΩΝ
+# =========================================================
+
+@app.post("/api/orders/today/clear")
+def clear_today_orders():
+    connection = get_connection()
+
+    cursor = connection.execute(
+        """
+        UPDATE orders
+        SET status = 'cleared'
+        WHERE DATE(
+            created_at,
+            'localtime'
+        ) = DATE(
+            'now',
+            'localtime'
+        )
+        AND COALESCE(
+            status,
+            'new'
+        ) != 'cleared'
+        """
+    )
+
+    connection.commit()
+
+    cleared = (
+        cursor.rowcount
+    )
+
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "cleared": cleared
+    })
+
+
 # =========================================================
 # ΑΡΧΙΚΟΠΟΙΗΣΗ ΒΑΣΗΣ
 # =========================================================
 
 create_call_history_table()
-
 create_customer_cylinder_columns()
-
 create_order_status_column()
 
 
@@ -1683,10 +1649,9 @@ create_order_status_column()
 # =========================================================
 
 if __name__ == "__main__":
-
     app.run(
         host="127.0.0.1",
-        port=5000,
+        port=5001,
         debug=True,
         use_reloader=False
     )
