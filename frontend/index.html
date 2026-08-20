@@ -434,11 +434,31 @@
                                     <input
                                         type="checkbox"
                                         id="cylinderTall"
-                                    >
+                                       >
                                     Ψηλή
                                 </label>
 
                             </div>
+    <div class="customer-cylinder-row">
+
+    <strong>
+        Μανιτάρια χρησιδάνειο:
+    </strong>
+
+    <input
+        type="number"
+        id="loanHeaters"
+        min="0"
+        step="1"
+        inputmode="numeric"
+        placeholder="0"
+        style="
+            width:70px;
+            text-align:center;
+        "
+    >
+
+                        </div>
 
                         </div>
 
@@ -720,28 +740,31 @@
                          ΚΟΥΜΠΙΑ ΠΑΡΑΓΓΕΛΙΑΣ
                     ================================================== -->
 
-                    <div class="action-row">
+                    <div class="action-row" style="display:flex; flex-direction:column; gap:10px;">
 
-                        <button
-                    type="button"
-                    id="saveOrderBtn"
-                    class="btn btn-secondary"
->
-                     Αποθήκευση παραγγελίας
-                    </button>
+    <div style="display:flex; gap:10px; width:100%;">
 
-                        <button
-                    type="button"
-                    id="sendToDriverBtn"
-                    class="btn btn-success"
->
-                    Αποστολή στον οδηγό
-                    </button>
+        <button
+            type="button"
+            id="saveOrderBtn"
+            class="btn btn-secondary"
+            style="flex:1;"
+        >
+            Αποθήκευση παραγγελίας
+        </button>
 
-                    </div>
+    </div>
 
-                </section>
+    <button
+        type="button"
+        id="scheduleOrderBtn"
+        class="btn btn-warning"
+        style="width:100%;"
+    >
+        🕒 Προγραμματισμένη παραγγελία
+    </button>
 
+</div>
 
                 <!-- =================================================
                      ΣΗΜΑΝΤΙΚΕΣ ΟΔΗΓΙΕΣ
@@ -866,6 +889,11 @@
         <strong id="completedOrdersCount">0</strong>
             </div>  
 
+           <div class="summary-card" id="sendToDriverBtn">
+        <span>Αποστολή στον οδηγό</span>
+        <strong>🚚</strong>
+        </div>
+            
         </section>
 
     </main>

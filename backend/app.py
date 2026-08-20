@@ -101,7 +101,8 @@ def create_customer_cylinder_columns():
         "cylinder_25kg": "INTEGER NOT NULL DEFAULT 0",
         "cylinder_barrel": "INTEGER NOT NULL DEFAULT 0",
         "cylinder_short": "INTEGER NOT NULL DEFAULT 0",
-        "cylinder_tall": "INTEGER NOT NULL DEFAULT 0"
+        "cylinder_tall": "INTEGER NOT NULL DEFAULT 0",
+        "loan_heaters": "INTEGER NOT NULL DEFAULT 0"
     }
 
     for column_name, column_definition in cylinder_columns.items():
@@ -145,6 +146,54 @@ def create_order_status_column():
 
         connection.commit()
 
+    connection.close()
+
+
+# =========================================================
+# ΠΕΔΙΑ ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΗΣ ΠΑΡΑΓΓΕΛΙΑΣ
+# =========================================================
+
+def create_order_schedule_columns():
+
+    connection = get_connection()
+
+    columns = connection.execute(
+        "PRAGMA table_info(orders)"
+    ).fetchall()
+
+    column_names = [
+        column["name"]
+        for column in columns
+    ]
+
+    if "scheduled_date" not in column_names:
+
+        connection.execute(
+            """
+            ALTER TABLE orders
+            ADD COLUMN scheduled_date TEXT
+            """
+        )
+
+    if "scheduled_time" not in column_names:
+
+        connection.execute(
+            """
+            ALTER TABLE orders
+            ADD COLUMN scheduled_time TEXT
+            """
+        )
+
+    if "reminder_minutes" not in column_names:
+
+        connection.execute(
+            """
+            ALTER TABLE orders
+            ADD COLUMN reminder_minutes INTEGER DEFAULT 30
+            """
+        )
+
+    connection.commit()
     connection.close()
 
 
@@ -548,6 +597,13 @@ def create_customer():
         "cylinder_tall"
     )
 
+    loan_heaters = int(
+        data.get("loan_heaters", 0) or 0
+    )
+
+    if loan_heaters < 0:
+        loan_heaters = 0
+
     if not fullname:
         return jsonify({
             "success": False,
@@ -571,7 +627,6 @@ def create_customer():
     if existing_customer is not None:
         return jsonify({
             "success": False,
-
             "message": (
                 "Υπάρχει ήδη πελάτης "
                 "με αυτό το τηλέφωνο."
@@ -601,10 +656,11 @@ def create_customer():
                 cylinder_25kg,
                 cylinder_barrel,
                 cylinder_short,
-                cylinder_tall
+                cylinder_tall,
+                loan_heaters
             )
             VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             """,
@@ -626,15 +682,14 @@ def create_customer():
                 cylinder_25kg,
                 cylinder_barrel,
                 cylinder_short,
-                cylinder_tall
+                cylinder_tall,
+                loan_heaters
             )
         )
 
         connection.commit()
 
-        customer_id = (
-            cursor.lastrowid
-        )
+        customer_id = cursor.lastrowid
 
         customer = connection.execute(
             """
@@ -652,7 +707,6 @@ def create_customer():
 
         return jsonify({
             "success": False,
-
             "message": (
                 "Υπάρχει ήδη πελάτης "
                 "με αυτό το κύριο τηλέφωνο."
@@ -663,11 +717,9 @@ def create_customer():
 
     return jsonify({
         "success": True,
-
         "message": (
             "Ο πελάτης αποθηκεύτηκε σωστά."
         ),
-
         "customer": dict(customer)
     }), 201
 
@@ -788,10 +840,19 @@ def update_customer(customer_id):
         "cylinder_tall"
     )
 
+    loan_heaters = int(
+        data.get(
+            "loan_heaters",
+            0
+        ) or 0
+    )
+
+    if loan_heaters < 0:
+        loan_heaters = 0
+
     if not fullname:
         return jsonify({
             "success": False,
-
             "message": (
                 "Το ονοματεπώνυμο είναι υποχρεωτικό."
             )
@@ -800,7 +861,6 @@ def update_customer(customer_id):
     if not phone1:
         return jsonify({
             "success": False,
-
             "message": (
                 "Το κύριο τηλέφωνο είναι υποχρεωτικό."
             )
@@ -850,7 +910,8 @@ def update_customer(customer_id):
                 cylinder_25kg = ?,
                 cylinder_barrel = ?,
                 cylinder_short = ?,
-                cylinder_tall = ?
+                cylinder_tall = ?,
+                loan_heaters = ?
             WHERE id = ?
             """,
             (
@@ -872,6 +933,7 @@ def update_customer(customer_id):
                 cylinder_barrel,
                 cylinder_short,
                 cylinder_tall,
+                loan_heaters,
                 customer_id
             )
         )
@@ -895,7 +957,6 @@ def update_customer(customer_id):
 
         return jsonify({
             "success": False,
-
             "message": (
                 "Υπάρχει ήδη πελάτης "
                 "με ένα από αυτά τα τηλέφωνα."
@@ -906,12 +967,10 @@ def update_customer(customer_id):
 
     return jsonify({
         "success": True,
-
         "message": (
             "Τα στοιχεία του πελάτη "
             "ενημερώθηκαν σωστά."
         ),
-
         "customer": dict(customer)
     })
 
@@ -959,9 +1018,7 @@ def incoming_call():
 
     connection.commit()
 
-    call_id = (
-        cursor.lastrowid
-    )
+    call_id = cursor.lastrowid
 
     call_row = connection.execute(
         """
@@ -1379,9 +1436,7 @@ def save_order():
 
     connection.commit()
 
-    order_id = (
-        cursor.lastrowid
-    )
+    order_id = cursor.lastrowid
 
     connection.close()
 
@@ -1623,9 +1678,7 @@ def clear_today_orders():
 
     connection.commit()
 
-    cleared = (
-        cursor.rowcount
-    )
+    cleared = cursor.rowcount
 
     connection.close()
 
@@ -1636,12 +1689,297 @@ def clear_today_orders():
 
 
 # =========================================================
+# ΑΠΟΘΗΚΕΥΣΗ ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΗΣ ΠΑΡΑΓΓΕΛΙΑΣ
+# =========================================================
+
+@app.post("/api/orders/scheduled")
+def save_scheduled_order():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    fullname = str(
+        data.get("fullname") or ""
+    ).strip()
+
+    phone1 = str(
+        data.get("phone1") or ""
+    ).strip()
+
+    phone2 = str(
+        data.get("phone2") or ""
+    ).strip()
+
+    phone3 = str(
+        data.get("phone3") or ""
+    ).strip()
+
+    area = str(
+        data.get("area") or ""
+    ).strip()
+
+    address = str(
+        data.get("address") or ""
+    ).strip()
+
+    floor = str(
+        data.get("floor") or ""
+    ).strip()
+
+    notes = str(
+        data.get("notes") or ""
+    ).strip()
+
+    order_notes = str(
+        data.get("order_notes") or ""
+    ).strip()
+
+    scheduled_date = str(
+        data.get("scheduled_date") or ""
+    ).strip()
+
+    scheduled_time = str(
+        data.get("scheduled_time") or ""
+    ).strip()
+
+    reminder_minutes = int(
+        data.get("reminder_minutes") or 30
+    )
+
+    if not fullname or not phone1:
+
+        return jsonify({
+            "success": False,
+            "message": (
+                "Χρειάζονται ονοματεπώνυμο "
+                "και κύριο τηλέφωνο."
+            )
+        }), 400
+
+    if not scheduled_date or not scheduled_time:
+
+        return jsonify({
+            "success": False,
+            "message": (
+                "Χρειάζονται ημερομηνία "
+                "και ώρα παράδοσης."
+            )
+        }), 400
+
+    connection = get_connection()
+
+    customer_row = connection.execute(
+        """
+        SELECT id
+        FROM customers
+        WHERE phone1 = ?
+           OR phone2 = ?
+           OR phone3 = ?
+        LIMIT 1
+        """,
+        (
+            phone1,
+            phone1,
+            phone1
+        )
+    ).fetchone()
+
+    customer_id = (
+        customer_row["id"]
+        if customer_row
+        else None
+    )
+
+    cursor = connection.execute(
+        """
+        INSERT INTO orders (
+            customer_id,
+            fullname,
+            phone1,
+            phone2,
+            phone3,
+            area,
+            address,
+            floor,
+            notes,
+
+            delivery_3kg,
+            delivery_10kg_mix,
+            delivery_10kg_propane,
+            delivery_13kg,
+            delivery_25kg,
+
+            return_3kg,
+            return_10kg_mix,
+            return_10kg_propane,
+            return_13kg,
+            return_25kg,
+
+            order_notes,
+            status,
+            scheduled_date,
+            scheduled_time,
+            reminder_minutes
+        )
+        VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?,
+            'scheduled',
+            ?, ?, ?
+        )
+        """,
+        (
+            customer_id,
+            fullname,
+            phone1,
+            phone2,
+            phone3,
+            area,
+            address,
+            floor,
+            notes,
+
+            int(
+                data.get(
+                    "delivery_3kg"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "delivery_10kg_mix"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "delivery_10kg_propane"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "delivery_13kg"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "delivery_25kg"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "return_3kg"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "return_10kg_mix"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "return_10kg_propane"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "return_13kg"
+                ) or 0
+            ),
+
+            int(
+                data.get(
+                    "return_25kg"
+                ) or 0
+            ),
+
+            order_notes,
+            scheduled_date,
+            scheduled_time,
+            reminder_minutes
+        )
+    )
+
+    connection.commit()
+
+    order_id = cursor.lastrowid
+
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "order_id": order_id,
+        "message": (
+            "Η προγραμματισμένη "
+            "παραγγελία αποθηκεύτηκε."
+        )
+    })
+
+
+# =========================================================
+# ΛΙΣΤΑ ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΩΝ ΠΑΡΑΓΓΕΛΙΩΝ
+# =========================================================
+
+@app.get("/api/orders/scheduled")
+def get_scheduled_orders():
+
+    connection = get_connection()
+
+    rows = connection.execute(
+        """
+        SELECT
+            id,
+            customer_id,
+            fullname,
+            phone1,
+            area,
+            address,
+            delivery_3kg,
+            delivery_10kg_mix,
+            delivery_10kg_propane,
+            delivery_13kg,
+            delivery_25kg,
+            order_notes,
+            scheduled_date,
+            scheduled_time,
+            reminder_minutes,
+            status
+        FROM orders
+        WHERE status = 'scheduled'
+        ORDER BY
+            scheduled_date ASC,
+            scheduled_time ASC
+        """
+    ).fetchall()
+
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "orders": [
+            dict(row)
+            for row in rows
+        ]
+    })
+
+
+# =========================================================
 # ΑΡΧΙΚΟΠΟΙΗΣΗ ΒΑΣΗΣ
 # =========================================================
 
 create_call_history_table()
 create_customer_cylinder_columns()
 create_order_status_column()
+create_order_schedule_columns()
 
 
 # =========================================================

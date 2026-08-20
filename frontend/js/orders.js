@@ -518,3 +518,447 @@ if (deleteAllTodayOrdersBtn) {
         }
     });
 }
+
+/* =========================================================
+   ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΗ ΠΑΡΑΓΓΕΛΙΑ
+========================================================= */
+
+
+const scheduleOrderBtn =
+    document.getElementById(
+        "scheduleOrderBtn"
+    );
+
+if (scheduleOrderBtn) {
+
+    scheduleOrderBtn.addEventListener(
+        "click",
+        async () => {
+
+            const deliveryDate =
+                prompt(
+                    "Ημερομηνία παράδοσης (π.χ. 20/08/2026):"
+                );
+
+            if (!deliveryDate) {
+                return;
+            }
+
+
+            const deliveryTime =
+                prompt(
+                    "Ώρα παράδοσης (π.χ. 18:30):"
+                );
+
+            if (!deliveryTime) {
+                return;
+            }
+
+
+            const reminderMinutes =
+                prompt(
+                    "Ειδοποίηση πόσα λεπτά πριν;",
+                    "30"
+                );
+
+            if (!reminderMinutes) {
+                return;
+            }
+
+
+            const reminderNumber =
+                Number(reminderMinutes);
+
+            if (
+                !Number.isInteger(reminderNumber) ||
+                reminderNumber < 1
+            ) {
+
+                alert(
+                    "Γράψε σωστό αριθμό λεπτών, π.χ. 3, 20 ή 30."
+                );
+
+                return;
+            }
+
+
+            const orderData = {
+
+    fullname:
+        fullnameInput.value.trim(),
+
+    phone1:
+        phone1Input.value.trim(),
+
+    phone2:
+        phone2Input.value.trim(),
+
+    phone3:
+        phone3Input.value.trim(),
+
+    area:
+        areaInput.value.trim(),
+
+    address:
+        addressInput.value.trim(),
+
+    floor:
+        floorInput.value.trim(),
+
+    notes:
+        notesInput.value.trim(),
+
+    delivery_3kg:
+        Number(
+            document.getElementById(
+                "delivery3kg"
+            )?.value || 0
+        ),
+
+    delivery_10kg_mix:
+        Number(
+            document.getElementById(
+                "delivery10kgMix"
+            )?.value || 0
+        ),
+
+    delivery_10kg_propane:
+        Number(
+            document.getElementById(
+                "delivery10kgPropane"
+            )?.value || 0
+        ),
+
+    delivery_13kg:
+        Number(
+            document.getElementById(
+                "delivery13kg"
+            )?.value || 0
+        ),
+
+    delivery_25kg:
+        Number(
+            document.getElementById(
+                "delivery25kg"
+            )?.value || 0
+        ),
+
+    return_3kg:
+        Number(
+            document.getElementById(
+                "return3kg"
+            )?.value || 0
+        ),
+
+    return_10kg_mix:
+        Number(
+            document.getElementById(
+                "return10kgMix"
+            )?.value || 0
+        ),
+
+    return_10kg_propane:
+        Number(
+            document.getElementById(
+                "return10kgPropane"
+            )?.value || 0
+        ),
+
+    return_13kg:
+        Number(
+            document.getElementById(
+                "return13kg"
+            )?.value || 0
+        ),
+
+    return_25kg:
+        Number(
+            document.getElementById(
+                "return25kg"
+            )?.value || 0
+        ),
+
+    order_notes:
+        document.getElementById(
+            "orderNotes"
+        )?.value.trim() || "",
+
+    scheduled_date:
+        deliveryDate,
+
+    scheduled_time:
+        deliveryTime,
+
+    reminder_minutes:
+        reminderNumber
+};
+
+
+if (
+    !orderData.fullname ||
+    !orderData.phone1
+) {
+
+    alert(
+        "Χρειάζονται πελάτης και κύριο τηλέφωνο."
+    );
+
+    return;
+}
+
+
+try {
+
+    const response =
+        await fetch(
+            "/api/orders/scheduled",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify(
+                        orderData
+                    )
+            }
+        );
+
+
+    const data =
+        await response.json();
+
+
+    if (
+        !response.ok ||
+        !data.success
+    ) {
+
+        alert(
+            data.message ||
+            "Δεν αποθηκεύτηκε η προγραμματισμένη παραγγελία."
+        );
+
+        return;
+    }
+
+
+    alert(
+        "✅ Η προγραμματισμένη παραγγελία αποθηκεύτηκε.\n\n" +
+        "Ημερομηνία: " +
+        deliveryDate +
+        "\nΏρα: " +
+        deliveryTime +
+        "\nΕιδοποίηση: " +
+        reminderNumber +
+        " λεπτά πριν."
+    );
+
+
+} catch (error) {
+
+    console.error(
+        "Σφάλμα προγραμματισμένης παραγγελίας:",
+        error
+    );
+
+    alert(
+        "Δεν υπάρχει σύνδεση με τον server."
+    );
+}
+        }
+    );
+}
+
+let reminderAudioContext = null;
+
+function playReminderSound() {
+    try {
+        if (!reminderAudioContext) {
+            reminderAudioContext =
+                new (
+                    window.AudioContext ||
+                    window.webkitAudioContext
+                )();
+        }
+
+        if (reminderAudioContext.state === "suspended") {
+            reminderAudioContext.resume();
+        }
+
+        const ctx = reminderAudioContext;
+        const start = ctx.currentTime;
+
+        const ringBurst = (delay) => {
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc1.type = "sine";
+            osc2.type = "sine";
+
+            osc1.frequency.value = 440;
+            osc2.frequency.value = 480;
+
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(ctx.destination);
+
+            const t = start + delay;
+
+            gain.gain.setValueAtTime(0.001, t);
+
+            for (let i = 0; i < 10; i++) {
+                const pulse = t + i * 0.10;
+
+                gain.gain.linearRampToValueAtTime(
+                    0.35,
+                    pulse + 0.025
+                );
+
+                gain.gain.linearRampToValueAtTime(
+                    0.06,
+                    pulse + 0.075
+                );
+            }
+
+            gain.gain.linearRampToValueAtTime(
+                0.001,
+                t + 1.0
+            );
+
+            osc1.start(t);
+            osc2.start(t);
+
+            osc1.stop(t + 1.05);
+            osc2.stop(t + 1.05);
+        };
+
+        ringBurst(0);
+        ringBurst(1.25);
+
+        ringBurst(3.0);
+        ringBurst(4.25);
+
+    } catch (error) {
+        console.error(
+            "Σφάλμα ήχου ειδοποίησης:",
+            error
+        );
+    }
+}
+
+let notifiedScheduledOrders = new Set();
+
+async function checkScheduledOrders() {
+    try {
+        const response = await fetch(
+            "/api/orders/scheduled",
+            {
+                cache: "no-store"
+            }
+        );
+
+        const data = await response.json();
+
+        if (
+            !response.ok ||
+            !data.success ||
+            !Array.isArray(data.orders)
+        ) {
+            return;
+        }
+
+        const now = new Date();
+
+        for (const order of data.orders) {
+            if (
+                !order.scheduled_date ||
+                !order.scheduled_time
+            ) {
+                continue;
+            }
+
+            const [
+                day,
+                month,
+                year
+            ] = order.scheduled_date.split("/");
+
+            const [
+                hour,
+                minute
+            ] = order.scheduled_time.split(":");
+
+            const deliveryDateTime =
+                new Date(
+                    Number(year),
+                    Number(month) - 1,
+                    Number(day),
+                    Number(hour),
+                    Number(minute),
+                    0
+                );
+
+            const reminderMinutes =
+                Number(
+                    order.reminder_minutes || 0
+                );
+
+            const reminderTime =
+                new Date(
+                    deliveryDateTime.getTime() -
+                    reminderMinutes * 60000
+                );
+
+            const orderKey =
+                `${order.id}-${order.scheduled_date}-${order.scheduled_time}`;
+
+            if (
+                now >= reminderTime &&
+                now <= deliveryDateTime &&
+                !notifiedScheduledOrders.has(orderKey)
+            ) {
+                notifiedScheduledOrders.add(
+                orderKey
+                );
+
+                playReminderSound();
+
+                alert(
+                    "🔔 ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΗ ΠΑΡΑΓΓΕΛΙΑ\n\n" +
+                    "Πελάτης: " +
+                    order.fullname +
+                    "\n" +
+                    "Τηλέφωνο: " +
+                    order.phone1 +
+                    "\n" +
+                    "Περιοχή: " +
+                    (order.area || "-") +
+                    "\n" +
+                    "Διεύθυνση: " +
+                    (order.address || "-") +
+                    "\n\n" +
+                    "Ώρα παράδοσης: " +
+                    order.scheduled_time
+                );
+            }
+        }
+
+    } catch (error) {
+        console.error(
+            "Σφάλμα ελέγχου προγραμματισμένων παραγγελιών:",
+            error
+        );
+    }
+}
+
+checkScheduledOrders();
+
+setInterval(
+    checkScheduledOrders,
+    5000
+);

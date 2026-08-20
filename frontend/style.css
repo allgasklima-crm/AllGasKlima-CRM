@@ -764,3 +764,29 @@ textarea:focus {
     color: #168a32 !important;
     font-weight: 700;
 }
+
+#sendToDriverBtn {
+    grid-column: 2 / 4;
+    min-height: 64px;
+
+    background: #eef8f1;
+    border: 1px solid #b9dec4;
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    cursor: pointer;
+}
+
+#sendToDriverBtn span {
+    color: #18723a;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+#sendToDriverBtn strong {
+    font-size: 22px;
+}
