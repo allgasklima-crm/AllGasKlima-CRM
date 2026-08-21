@@ -102,7 +102,8 @@ def create_customer_cylinder_columns():
         "cylinder_barrel": "INTEGER NOT NULL DEFAULT 0",
         "cylinder_short": "INTEGER NOT NULL DEFAULT 0",
         "cylinder_tall": "INTEGER NOT NULL DEFAULT 0",
-        "loan_heaters": "INTEGER NOT NULL DEFAULT 0"
+        "loan_heaters": "INTEGER NOT NULL DEFAULT 0",
+        "loan_empty_cylinders": "INTEGER NOT NULL DEFAULT 0"
     }
 
     for column_name, column_definition in cylinder_columns.items():
@@ -597,9 +598,16 @@ def create_customer():
         "cylinder_tall"
     )
 
-    loan_heaters = int(
-        data.get("loan_heaters", 0) or 0
-    )
+    loan_empty_cylinders = int(
+    data.get(
+        "loan_empty_cylinders",
+        0
+    ) or 0
+)
+
+    if loan_empty_cylinders < 0:
+        loan_empty_cylinders = 0
+    
 
     if loan_heaters < 0:
         loan_heaters = 0
@@ -657,11 +665,12 @@ def create_customer():
                 cylinder_barrel,
                 cylinder_short,
                 cylinder_tall,
-                loan_heaters
+                loan_heaters,
+                loan_empty_cylinders
             )
             VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             """,
             (
@@ -683,7 +692,8 @@ def create_customer():
                 cylinder_barrel,
                 cylinder_short,
                 cylinder_tall,
-                loan_heaters
+                loan_heaters,
+                loan_empty_cylinders
             )
         )
 
@@ -733,7 +743,7 @@ def update_customer(customer_id):
     data = request.get_json(
         silent=True
     ) or {}
-
+    print("UPDATE CUSTOMER DATA:", data, flush=True)
     fullname = str(
         data.get(
             "fullname",
@@ -850,6 +860,16 @@ def update_customer(customer_id):
     if loan_heaters < 0:
         loan_heaters = 0
 
+    loan_empty_cylinders = int(
+        data.get(
+            "loan_empty_cylinders",
+            0
+        ) or 0
+    )
+
+    if loan_empty_cylinders < 0:
+        loan_empty_cylinders = 0
+
     if not fullname:
         return jsonify({
             "success": False,
@@ -911,10 +931,11 @@ def update_customer(customer_id):
                 cylinder_barrel = ?,
                 cylinder_short = ?,
                 cylinder_tall = ?,
-                loan_heaters = ?
-            WHERE id = ?
-            """,
-            (
+                loan_heaters = ?,
+                loan_empty_cylinders = ?
+                WHERE id = ?
+                """,
+                (
                 fullname,
                 phone1,
                 phone2 or None,
@@ -934,6 +955,7 @@ def update_customer(customer_id):
                 cylinder_short,
                 cylinder_tall,
                 loan_heaters,
+                loan_empty_cylinders,
                 customer_id
             )
         )
@@ -1567,6 +1589,166 @@ def get_today_orders():
         "orders": orders
     })
 
+# =========================================================
+# ΙΣΤΟΡΙΚΟ ΠΑΡΑΓΓΕΛΙΩΝ ΠΕΛΑΤΗ
+# =========================================================
+
+@app.get("/api/customer/<int:customer_id>/history")
+def get_customer_history(customer_id):
+
+    connection = get_connection()
+
+    customer = connection.execute(
+        """
+        SELECT
+            id,
+            fullname,
+            phone1,
+            phone2,
+            phone3,
+            area,
+            address
+        FROM customers
+        WHERE id = ?
+        """,
+        (customer_id,)
+    ).fetchone()
+
+    if not customer:
+        connection.close()
+
+        return jsonify({
+            "success": False,
+            "message": "Ο πελάτης δεν βρέθηκε."
+        }), 404
+
+
+    rows = connection.execute(
+        """
+        SELECT
+            id,
+            customer_id,
+
+            delivery_3kg,
+            delivery_10kg_mix,
+            delivery_10kg_propane,
+            delivery_13kg,
+            delivery_25kg,
+
+            return_3kg,
+            return_10kg_mix,
+            return_10kg_propane,
+            return_13kg,
+            return_25kg,
+
+            order_notes,
+            status,
+            created_at,
+            scheduled_date,
+            scheduled_time
+
+        FROM orders
+
+        WHERE customer_id = ?
+
+        ORDER BY
+            created_at DESC,
+            id DESC
+        """,
+        (customer_id,)
+    ).fetchall()
+
+
+    history = []
+
+    for row in rows:
+
+        history.append({
+
+            "id":
+                row["id"],
+
+            "delivery_3kg":
+                row["delivery_3kg"],
+
+            "delivery_10kg_mix":
+                row["delivery_10kg_mix"],
+
+            "delivery_10kg_propane":
+                row["delivery_10kg_propane"],
+
+            "delivery_13kg":
+                row["delivery_13kg"],
+
+            "delivery_25kg":
+                row["delivery_25kg"],
+
+
+            "return_3kg":
+                row["return_3kg"],
+
+            "return_10kg_mix":
+                row["return_10kg_mix"],
+
+            "return_10kg_propane":
+                row["return_10kg_propane"],
+
+            "return_13kg":
+                row["return_13kg"],
+
+            "return_25kg":
+                row["return_25kg"],
+
+
+            "order_notes":
+                row["order_notes"],
+
+            "status":
+                row["status"],
+
+            "created_at":
+                row["created_at"],
+
+            "scheduled_date":
+                row["scheduled_date"],
+
+            "scheduled_time":
+                row["scheduled_time"]
+        })
+
+
+    connection.close()
+
+
+    return jsonify({
+
+        "success": True,
+
+        "customer": {
+            "id":
+                customer["id"],
+
+            "fullname":
+                customer["fullname"],
+
+            "phone1":
+                customer["phone1"],
+
+            "phone2":
+                customer["phone2"],
+
+            "phone3":
+                customer["phone3"],
+
+            "area":
+                customer["area"],
+
+            "address":
+                customer["address"]
+        },
+
+        "history": history
+    })
 
 # =========================================================
 # ΑΠΟΣΤΟΛΗ ΣΤΟΝ ΟΔΗΓΟ
