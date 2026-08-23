@@ -110,17 +110,36 @@ function buildProductText(order) {
         "25kg"
     );
 
+        const loans = [];
 
-    return {
-        delivery:
-            delivery.length
+        addItem(
+            loans,
+            order.loan_heaters,
+            "Μανιτάρια χρησιδάνειο"
+        );
+
+        addItem(
+            loans,
+            order.loan_empty_cylinders,
+            "Κενές φιάλες χρησιδάνειο"
+        );
+
+
+        return {
+            delivery:
+                delivery.length
                 ? delivery.join(", ")
                 : "-",
 
         returns:
-            returns.length
-                ? returns.join(", ")
-                : "-"
+    returns.length
+        ? returns.join(", ")
+        : "-",
+
+    loans:
+        loans.length
+            ? loans.join(", ")
+            : "-"
     };
 }
 
@@ -316,6 +335,10 @@ async function loadCustomerHistory() {
                             </th>
 
                             <th style="padding:10px;text-align:left;">
+                                Χρησιδάνειο
+                            </th>
+
+                            <th style="padding:10px;text-align:left;">
                                 Κατάσταση
                             </th>
 
@@ -384,6 +407,12 @@ async function loadCustomerHistory() {
                         >
                             ${escapeHtml(
                                 products.returns
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                products.loans
                             )}
                         </td>
 

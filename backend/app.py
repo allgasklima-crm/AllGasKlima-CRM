@@ -683,9 +683,11 @@ def create_customer():
                 loan_empty_cylinders,
                 customer_type
             )
-            VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                ?, ?, ?, ?, ?, ?, ?, ?, ?
+                VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?
+            )
             )
             """,
             (
@@ -1400,7 +1402,8 @@ def save_order():
             return_10kg_propane,
             return_13kg,
             return_25kg,
-
+            loan_heaters,
+            loan_empty_cylinders,
             order_notes,
             status
         )
@@ -1408,7 +1411,7 @@ def save_order():
             ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?,
-            ?,
+            ?, ?, ?,
             'new'
         )
         """,
@@ -1482,7 +1485,17 @@ def save_order():
                     "return_25kg"
                 ) or 0
             ),
+            int(
+                data.get(
+                    "loan_heaters"
+                ) or 0
+            ),
 
+            int(
+                data.get(
+                    "loan_empty_cylinders"
+                ) or 0
+            ),
             order_notes
         )
     )
@@ -1672,6 +1685,9 @@ def get_customer_history(customer_id):
             return_13kg,
             return_25kg,
 
+            loan_heaters,
+            loan_empty_cylinders,
+
             order_notes,
             status,
             created_at,
@@ -1729,6 +1745,12 @@ def get_customer_history(customer_id):
 
             "return_25kg":
                 row["return_25kg"],
+
+            "loan_heaters":
+                row["loan_heaters"],
+
+            "loan_empty_cylinders":
+                row["loan_empty_cylinders"],
 
 
             "order_notes":
