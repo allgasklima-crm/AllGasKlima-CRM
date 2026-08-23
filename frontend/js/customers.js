@@ -465,6 +465,22 @@ function fillCustomerForm(customer) {
                 : "";
     }
 
+    // =================================================
+    // ΤΥΠΟΣ ΠΕΛΑΤΗ
+    // =================================================
+
+    const customerType =
+        customer.customer_type ||
+        "retail";
+
+    const customerTypeInput =
+        document.querySelector(
+            `input[name="customerType"][value="${customerType}"]`
+        );
+
+    if (customerTypeInput) {
+        customerTypeInput.checked = true;
+    }
 
     updateCustomerNumber();
 }
@@ -955,10 +971,15 @@ async function saveCustomer() {
             ),
 
         loan_empty_cylinders:
-            Number(
-                loanEmptyCylindersInput?.value ||
-                0
-            )
+    Number(
+        loanEmptyCylindersInput?.value ||
+        0
+    ),
+
+    customer_type:
+    document.querySelector(
+        'input[name="customerType"]:checked'
+    )?.value || "retail"
     };
 
 

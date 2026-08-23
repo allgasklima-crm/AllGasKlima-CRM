@@ -103,7 +103,8 @@ def create_customer_cylinder_columns():
         "cylinder_short": "INTEGER NOT NULL DEFAULT 0",
         "cylinder_tall": "INTEGER NOT NULL DEFAULT 0",
         "loan_heaters": "INTEGER NOT NULL DEFAULT 0",
-        "loan_empty_cylinders": "INTEGER NOT NULL DEFAULT 0"
+        "loan_empty_cylinders": "INTEGER NOT NULL DEFAULT 0",
+        "customer_type": "TEXT NOT NULL DEFAULT 'retail'"
     }
 
     for column_name, column_definition in cylinder_columns.items():
@@ -548,6 +549,19 @@ def create_customer():
         )
     ).strip()
 
+    customer_type = str(
+        data.get(
+            "customer_type",
+            "retail"
+        )
+    ).strip().lower()
+
+    if customer_type not in (
+        "retail",
+        "wholesale"
+    ):
+        customer_type = "retail"
+
     cylinder_screw = checkbox_value(
         data,
         "cylinder_screw"
@@ -666,11 +680,12 @@ def create_customer():
                 cylinder_short,
                 cylinder_tall,
                 loan_heaters,
-                loan_empty_cylinders
+                loan_empty_cylinders,
+                customer_type
             )
             VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+                ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             """,
             (
@@ -693,7 +708,8 @@ def create_customer():
                 cylinder_short,
                 cylinder_tall,
                 loan_heaters,
-                loan_empty_cylinders
+                loan_empty_cylinders,
+                customer_type
             )
         )
 
@@ -799,6 +815,19 @@ def update_customer(customer_id):
             ""
         )
     ).strip()
+
+    customer_type = str(
+        data.get(
+            "customer_type",
+            "retail"
+        )
+    ).strip().lower()
+
+    if customer_type not in (
+        "retail",
+        "wholesale"
+    ):
+        customer_type = "retail"
 
     cylinder_screw = checkbox_value(
         data,
@@ -932,7 +961,8 @@ def update_customer(customer_id):
                 cylinder_short = ?,
                 cylinder_tall = ?,
                 loan_heaters = ?,
-                loan_empty_cylinders = ?
+                loan_empty_cylinders = ?,
+                customer_type = ?
                 WHERE id = ?
                 """,
                 (
@@ -956,6 +986,7 @@ def update_customer(customer_id):
                 cylinder_tall,
                 loan_heaters,
                 loan_empty_cylinders,
+                customer_type,
                 customer_id
             )
         )
