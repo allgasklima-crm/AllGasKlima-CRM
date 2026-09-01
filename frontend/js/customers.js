@@ -47,6 +47,9 @@ const floorInput =
 const notesInput =
     document.getElementById("notes");
 
+const saveCustomerBtn =
+    document.getElementById("saveCustomerBtn");
+
 
 // =========================================================
 // ΦΙΑΛΕΣ ΠΕΛΑΤΗ
@@ -91,19 +94,7 @@ const loanHeatersInput =
     document.getElementById("loanHeaters");
 
 const loanEmptyCylindersInput =
-    document.getElementById(
-        "loanEmptyCylinders"
-    );
-
-
-// =========================================================
-// ΚΟΥΜΠΙ ΑΠΟΘΗΚΕΥΣΗΣ
-// =========================================================
-
-const saveCustomerBtn =
-    document.getElementById(
-        "saveCustomerBtn"
-    );
+    document.getElementById("loanEmptyCylinders");
 
 
 // =========================================================
@@ -114,11 +105,88 @@ let currentCustomerId = null;
 
 
 // =========================================================
+// ΒΟΗΘΗΤΙΚΕΣ ΣΥΝΑΡΤΗΣΕΙΣ
+// =========================================================
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function cleanValue(value) {
+    if (
+        value === null ||
+        value === undefined ||
+        value === "None" ||
+        value === "null"
+    ) {
+        return "";
+    }
+
+    return String(value);
+}
+
+
+function isProbablyPhone(value) {
+    const text =
+        String(value ?? "")
+            .trim()
+            .replace(/\s+/g, "");
+
+    if (!text) {
+        return false;
+    }
+
+    return /^[+0-9()-]{6,}$/.test(text);
+}
+
+
+function safeNonNegativeNumber(value) {
+    const number =
+        Number(value || 0);
+
+    if (!Number.isFinite(number)) {
+        return 0;
+    }
+
+    return Math.max(
+        0,
+        Math.trunc(number)
+    );
+}
+
+
+function showResultMessage(
+    message,
+    className = ""
+) {
+    if (!result) {
+        return;
+    }
+
+    if (!className) {
+        result.textContent = message;
+        return;
+    }
+
+    result.innerHTML = `
+        <div class="${className}">
+            ${message}
+        </div>
+    `;
+}
+
+
+// =========================================================
 // ΕΝΗΜΕΡΩΣΗ ΑΡΙΘΜΟΥ ΠΕΛΑΤΩΝ
 // =========================================================
 
 async function updateCustomerNumber() {
-
     const customerNumber =
         document.getElementById(
             "customerNumber"
@@ -129,7 +197,6 @@ async function updateCustomerNumber() {
     }
 
     try {
-
         const response =
             await fetch(
                 "/api/customers",
@@ -142,6 +209,7 @@ async function updateCustomerNumber() {
             await response.json();
 
         if (
+            response.ok &&
             data.success &&
             Array.isArray(data.customers)
         ) {
@@ -150,7 +218,6 @@ async function updateCustomerNumber() {
         }
 
     } catch (error) {
-
         console.error(
             "Σφάλμα ενημέρωσης αριθμού πελατών:",
             error
@@ -166,7 +233,6 @@ async function updateCustomerNumber() {
 function clearCustomerForm(
     preserveCylinders = false
 ) {
-
     if (fullnameInput) {
         fullnameInput.value = "";
     }
@@ -199,22 +265,15 @@ function clearCustomerForm(
         notesInput.value = "";
     }
 
-
-    // Χρησιδάνειο μανιταριών
     if (loanHeatersInput) {
         loanHeatersInput.value = "";
     }
 
-
-    // Χρησιδάνειο κενών φιαλών
     if (loanEmptyCylindersInput) {
         loanEmptyCylindersInput.value = "";
     }
 
-
-    // Καθαρισμός checkbox φιαλών
     if (!preserveCylinders) {
-
         [
             cylinderScrew,
             cylinderClip,
@@ -228,7 +287,6 @@ function clearCustomerForm(
             cylinderTall
         ].forEach(
             (checkbox) => {
-
                 if (checkbox) {
                     checkbox.checked = false;
                 }
@@ -236,10 +294,16 @@ function clearCustomerForm(
         );
     }
 
+    const retailInput =
+        document.querySelector(
+            'input[name="customerType"][value="retail"]'
+        );
+
+    if (retailInput) {
+        retailInput.checked = true;
+    }
 
     currentCustomerId = null;
-
-    updateCustomerNumber();
 }
 
 
@@ -248,29 +312,12 @@ function clearCustomerForm(
 // =========================================================
 
 function fillCustomerForm(customer) {
-
     if (!customer) {
         return;
     }
 
     currentCustomerId =
         customer.id ?? null;
-
-
-    const cleanValue = (value) => {
-
-        if (
-            value === null ||
-            value === undefined ||
-            value === "None" ||
-            value === "null"
-        ) {
-            return "";
-        }
-
-        return String(value);
-    };
-
 
     if (fullnameInput) {
         fullnameInput.value =
@@ -327,11 +374,6 @@ function fillCustomerForm(customer) {
                 customer.notes
             );
     }
-
-
-    // =====================================================
-    // ΤΥΠΟΙ ΦΙΑΛΩΝ
-    // =====================================================
 
     if (cylinderScrew) {
         cylinderScrew.checked =
@@ -396,11 +438,6 @@ function fillCustomerForm(customer) {
             );
     }
 
-
-    // =====================================================
-    // ΣΧΗΜΑ ΦΙΑΛΗΣ 10KG
-    // =====================================================
-
     if (cylinderBarrel) {
         cylinderBarrel.checked =
             Boolean(
@@ -428,46 +465,29 @@ function fillCustomerForm(customer) {
             );
     }
 
-
-    // =====================================================
-    // ΧΡΗΣΙΔΑΝΕΙΟ ΜΑΝΙΤΑΡΙΩΝ
-    // =====================================================
-
     if (loanHeatersInput) {
-
-        const loanHeatersValue =
+        const value =
             Number(
                 customer.loan_heaters || 0
             );
 
         loanHeatersInput.value =
-            loanHeatersValue > 0
-                ? loanHeatersValue
+            value > 0
+                ? value
                 : "";
     }
 
-
-    // =====================================================
-    // ΧΡΗΣΙΔΑΝΕΙΟ ΚΕΝΩΝ ΦΙΑΛΩΝ
-    // =====================================================
-
     if (loanEmptyCylindersInput) {
-
-        const loanEmptyCylindersValue =
+        const value =
             Number(
-                customer.loan_empty_cylinders ||
-                0
+                customer.loan_empty_cylinders || 0
             );
 
         loanEmptyCylindersInput.value =
-            loanEmptyCylindersValue > 0
-                ? loanEmptyCylindersValue
+            value > 0
+                ? value
                 : "";
     }
-
-    // =================================================
-    // ΤΥΠΟΣ ΠΕΛΑΤΗ
-    // =================================================
 
     const customerType =
         customer.customer_type ||
@@ -481,11 +501,7 @@ function fillCustomerForm(customer) {
     if (customerTypeInput) {
         customerTypeInput.checked = true;
     }
-
-    updateCustomerNumber();
 }
-
-
 
 
 // =========================================================
@@ -493,9 +509,7 @@ function fillCustomerForm(customer) {
 // =========================================================
 
 function startNewCustomer() {
-
-    currentCustomerId = null;
-
+    clearCustomerForm();
 
     if (phoneInput) {
         phoneInput.value = "";
@@ -505,23 +519,12 @@ function startNewCustomer() {
         result.innerHTML = "";
     }
 
-
-    // Καθαρισμός πελάτη
-    clearCustomerForm();
-
-
-    // =====================================================
-    // ΚΑΘΑΡΙΣΜΟΣ ΠΟΣΟΤΗΤΩΝ ΠΑΡΑΓΓΕΛΙΑΣ
-    // =====================================================
-
     const orderQuantityIds = [
-
         "delivery3kg",
         "delivery10kgMix",
         "delivery10kgPropane",
         "delivery13kg",
         "delivery25kg",
-
         "return3kg",
         "return10kgMix",
         "return10kgPropane",
@@ -529,15 +532,12 @@ function startNewCustomer() {
         "return25kg"
     ];
 
-
     orderQuantityIds.forEach(
         (id) => {
-
             const input =
                 document.getElementById(id);
 
             if (input) {
-
                 input.value = "";
 
                 if (
@@ -550,18 +550,12 @@ function startNewCustomer() {
         }
     );
 
-
-    // Επιπλέον ασφάλεια:
-    // καθαρίζει όλα τα number inputs
-    // της παραγγελίας, αλλά ΟΧΙ τα χρησιδάνεια.
-
     document
         .querySelectorAll(
             '.order-card input[type="number"]'
         )
         .forEach(
             (input) => {
-
                 if (
                     input.id !==
                     "loanHeaters" &&
@@ -573,22 +567,6 @@ function startNewCustomer() {
             }
         );
 
-
-    // Καθαρισμός χρησιδανείων
-
-    if (loanHeatersInput) {
-        loanHeatersInput.value = "";
-    }
-
-    if (loanEmptyCylindersInput) {
-        loanEmptyCylindersInput.value = "";
-    }
-
-
-    // =====================================================
-    // ΣΗΜΕΙΩΣΕΙΣ ΠΑΡΑΓΓΕΛΙΑΣ
-    // =====================================================
-
     const orderNotesInput =
         document.getElementById(
             "orderNotes"
@@ -597,11 +575,6 @@ function startNewCustomer() {
     if (orderNotesInput) {
         orderNotesInput.value = "";
     }
-
-
-    // =====================================================
-    // ΣΗΜΑΝΤΙΚΕΣ ΠΑΡΑΤΗΡΗΣΕΙΣ
-    // =====================================================
 
     const importantNotesInput =
         document.querySelector(
@@ -612,21 +585,15 @@ function startNewCustomer() {
         importantNotesInput.value = "";
     }
 
-
-    // Εμφάνιση φόρμας
-
     if (newCustomerForm) {
-
         newCustomerForm
             .classList
             .remove("hidden");
     }
 
-
     if (fullnameInput) {
         fullnameInput.focus();
     }
-
 
     window.scrollTo({
         top: 0,
@@ -640,32 +607,24 @@ function startNewCustomer() {
 // =========================================================
 
 async function searchCustomer() {
-
     const searchText =
         phoneInput
             ? phoneInput.value.trim()
             : "";
 
-
-    if (searchText === "") {
-
-        if (result) {
-            result.innerHTML =
-                "Γράψε όνομα, επώνυμο ή αριθμό τηλεφώνου.";
-        }
+    if (!searchText) {
+        showResultMessage(
+            "Γράψε όνομα, επώνυμο ή αριθμό τηλεφώνου."
+        );
 
         return;
     }
 
-
-    if (result) {
-        result.innerHTML =
-            "Αναζήτηση...";
-    }
-
+    showResultMessage(
+        "Αναζήτηση..."
+    );
 
     try {
-
         const response =
             await fetch(
                 "/api/customer?phone=" +
@@ -677,49 +636,37 @@ async function searchCustomer() {
                 }
             );
 
-
         const data =
             await response.json();
-
 
         if (
             !response.ok ||
             !data.success
         ) {
-
-            if (result) {
-                result.innerHTML =
-                    data.message ||
-                    "Παρουσιάστηκε σφάλμα στην αναζήτηση.";
-            }
+            showResultMessage(
+                data.message ||
+                "Παρουσιάστηκε σφάλμα στην αναζήτηση."
+            );
 
             return;
         }
-
 
         // =================================================
         // ΠΟΛΛΑ ΑΠΟΤΕΛΕΣΜΑΤΑ
         // =================================================
 
         if (data.multiple) {
-
             clearCustomerForm();
 
-            if (result) {
-
-                result.innerHTML = `
-                    <div class="incoming-call-message">
-                        ${escapeHtml(
-                            data.message ||
-                            "Βρέθηκαν περισσότεροι πελάτες. Γράψε τηλέφωνο ή πιο συγκεκριμένα στοιχεία."
-                        )}
-                    </div>
-                `;
-            }
-
+            showResultMessage(
+                escapeHtml(
+                    data.message ||
+                    "Βρέθηκαν περισσότεροι πελάτες. Γράψε πιο συγκεκριμένα στοιχεία."
+                ),
+                "incoming-call-message"
+            );
 
             if (phoneInput) {
-
                 phoneInput.focus();
                 phoneInput.select();
             }
@@ -727,80 +674,51 @@ async function searchCustomer() {
             return;
         }
 
-
         // =================================================
         // ΔΕΝ ΒΡΕΘΗΚΕ
         // =================================================
 
         if (!data.found) {
-
             clearCustomerForm();
 
-
-            if (result) {
-
-                result.innerHTML = `
-                    <div class="incoming-call-message">
-                        Δεν βρέθηκε πελάτης με:
-                        <strong>
-                            ${escapeHtml(
-                                searchText
-                            )}
-                        </strong>
-                    </div>
-                `;
-            }
-
+            showResultMessage(
+                `Δεν βρέθηκε πελάτης με: <strong>${escapeHtml(searchText)}</strong>`,
+                "incoming-call-message"
+            );
 
             if (
                 isProbablyPhone(
                     searchText
                 )
             ) {
-
                 if (phone1Input) {
                     phone1Input.value =
                         searchText;
                 }
-
-            } else {
-
-                if (fullnameInput) {
-                    fullnameInput.value =
-                        searchText;
-                }
-            }
-
-
-            if (newCustomerForm) {
-
-                newCustomerForm
-                    .classList
-                    .remove("hidden");
-            }
-
-
-            if (
-                isProbablyPhone(
-                    searchText
-                )
-            ) {
 
                 if (fullnameInput) {
                     fullnameInput.focus();
                 }
 
             } else {
+                if (fullnameInput) {
+                    fullnameInput.value =
+                        searchText;
+                }
 
                 if (phone1Input) {
                     phone1Input.focus();
                 }
             }
 
+            if (newCustomerForm) {
+                newCustomerForm
+                    .classList
+                    .remove("hidden");
+            }
 
             return;
         }
-
 
         // =================================================
         // ΒΡΕΘΗΚΕ ΠΕΛΑΤΗΣ
@@ -810,33 +728,20 @@ async function searchCustomer() {
             data.customer
         );
 
-
         if (newCustomerForm) {
-
             newCustomerForm
                 .classList
                 .remove("hidden");
         }
 
-
-        if (result) {
-
-            result.innerHTML = `
-                <div class="success-message">
-                    Βρέθηκε ο πελάτης:
-                    <strong>
-                        ${escapeHtml(
-                            data.customer.fullname ||
-                            ""
-                        )}
-                    </strong>
-                </div>
-            `;
-        }
-
+        showResultMessage(
+            `Βρέθηκε ο πελάτης: <strong>${escapeHtml(
+                data.customer?.fullname || ""
+            )}</strong>`,
+            "success-message"
+        );
 
         if (newCustomerForm) {
-
             newCustomerForm
                 .scrollIntoView({
                     behavior: "smooth",
@@ -844,19 +749,15 @@ async function searchCustomer() {
                 });
         }
 
-
     } catch (error) {
-
         console.error(
             "Σφάλμα αναζήτησης πελάτη:",
             error
         );
 
-
-        if (result) {
-            result.innerHTML =
-                "Δεν υπάρχει σύνδεση με τον server.";
-        }
+        showResultMessage(
+            "Σφάλμα επικοινωνίας με τον server."
+        );
     }
 }
 
@@ -865,172 +766,163 @@ async function searchCustomer() {
 // ΑΠΟΘΗΚΕΥΣΗ / ΕΝΗΜΕΡΩΣΗ ΠΕΛΑΤΗ
 // =========================================================
 
-async function saveCustomer() {
+async function saveCustomer(event) {
+    if (event) {
+        event.preventDefault();
+    }
+
+    console.log(
+        "SAVE CUSTOMER BUTTON CLICK"
+    );
 
     const customerData = {
-
         fullname:
-            fullnameInput
-                ? fullnameInput.value.trim()
-                : "",
+            fullnameInput?.value.trim() || "",
 
         phone1:
-            phone1Input
-                ? phone1Input.value.trim()
-                : "",
+            phone1Input?.value.trim() || "",
 
         phone2:
-            phone2Input
-                ? phone2Input.value.trim()
-                : "",
+            phone2Input?.value.trim() || "",
 
         phone3:
-            phone3Input
-                ? phone3Input.value.trim()
-                : "",
+            phone3Input?.value.trim() || "",
 
         area:
-            areaInput
-                ? areaInput.value.trim()
-                : "",
+            areaInput?.value.trim() || "",
 
         address:
-            addressInput
-                ? addressInput.value.trim()
-                : "",
+            addressInput?.value.trim() || "",
 
         floor:
-            floorInput
-                ? floorInput.value.trim()
-                : "",
+            floorInput?.value.trim() || "",
 
         notes:
-            notesInput
-                ? notesInput.value.trim()
-                : "",
-
-
-        // =================================================
-        // ΦΙΑΛΕΣ
-        // =================================================
+            notesInput?.value.trim() || "",
 
         cylinder_screw:
-            cylinderScrew?.checked ||
-            false,
+            Boolean(
+                cylinderScrew?.checked
+            ),
 
         cylinder_clip:
-            cylinderClip?.checked ||
-            false,
+            Boolean(
+                cylinderClip?.checked
+            ),
 
         cylinder_3kg:
-            cylinder3kg?.checked ||
-            false,
+            Boolean(
+                cylinder3kg?.checked
+            ),
 
         cylinder_10_mix:
-            cylinder10Mix?.checked ||
-            false,
+            Boolean(
+                cylinder10Mix?.checked
+            ),
 
         cylinder_10_propane:
-            cylinder10Propane?.checked ||
-            false,
+            Boolean(
+                cylinder10Propane?.checked
+            ),
 
         cylinder_13kg:
-            cylinder13kg?.checked ||
-            false,
+            Boolean(
+                cylinder13kg?.checked
+            ),
 
         cylinder_25kg:
-            cylinder25kg?.checked ||
-            false,
-
-
-        // =================================================
-        // ΣΧΗΜΑ 10KG
-        // =================================================
+            Boolean(
+                cylinder25kg?.checked
+            ),
 
         cylinder_barrel:
-            cylinderBarrel?.checked ||
-            false,
+            Boolean(
+                cylinderBarrel?.checked
+            ),
 
         cylinder_short:
-            cylinderShort?.checked ||
-            false,
+            Boolean(
+                cylinderShort?.checked
+            ),
 
         cylinder_tall:
-            cylinderTall?.checked ||
-            false,
-
-
-        // =================================================
-        // ΧΡΗΣΙΔΑΝΕΙΑ
-        // =================================================
+            Boolean(
+                cylinderTall?.checked
+            ),
 
         loan_heaters:
-            Number(
-                loanHeatersInput?.value ||
-                0
+            safeNonNegativeNumber(
+                loanHeatersInput?.value
             ),
 
         loan_empty_cylinders:
-    Number(
-        loanEmptyCylindersInput?.value ||
-        0
-    ),
+            safeNonNegativeNumber(
+                loanEmptyCylindersInput?.value
+            ),
 
-    customer_type:
-    document.querySelector(
-        'input[name="customerType"]:checked'
-    )?.value || "retail"
+        customer_type:
+            document.querySelector(
+                'input[name="customerType"]:checked'
+            )?.value || "retail"
     };
 
+    console.log(
+        "CUSTOMER DATA:",
+        customerData
+    );
 
     // =====================================================
     // ΕΛΕΓΧΟΣ ΟΝΟΜΑΤΟΣ
     // =====================================================
 
-    if (
-        customerData.fullname === ""
-    ) {
+    if (!customerData.fullname) {
+        showResultMessage(
+            "Το ονοματεπώνυμο είναι υποχρεωτικό."
+        );
 
-        if (result) {
-            result.innerHTML =
-                "Το ονοματεπώνυμο είναι υποχρεωτικό.";
-        }
-
-        if (fullnameInput) {
-            fullnameInput.focus();
-        }
+        fullnameInput?.focus();
 
         return;
     }
-
 
     // =====================================================
     // ΕΛΕΓΧΟΣ ΤΗΛΕΦΩΝΟΥ
     // =====================================================
 
-    if (
-        customerData.phone1 === ""
-    ) {
+    if (!customerData.phone1) {
+        showResultMessage(
+            "Το κύριο τηλέφωνο είναι υποχρεωτικό."
+        );
 
-        if (result) {
-            result.innerHTML =
-                "Το κύριο τηλέφωνο είναι υποχρεωτικό.";
-        }
-
-        if (phone1Input) {
-            phone1Input.focus();
-        }
+        phone1Input?.focus();
 
         return;
     }
 
+    // =====================================================
+    // POST / PUT
+    // =====================================================
 
-    // =====================================================
-    // ΚΛΕΙΔΩΜΑ ΚΟΥΜΠΙΟΥ
-    // =====================================================
+    const isExistingCustomer =
+        currentCustomerId !== null;
+
+    const url =
+        isExistingCustomer
+            ? `/api/customer/${currentCustomerId}`
+            : "/api/customer";
+
+    const method =
+        isExistingCustomer
+            ? "PUT"
+            : "POST";
+
+    console.log(
+        "SAVE REQUEST:",
+        method,
+        url
+    );
 
     if (saveCustomerBtn) {
-
         saveCustomerBtn.disabled =
             true;
 
@@ -1038,31 +930,11 @@ async function saveCustomer() {
             "Αποθήκευση...";
     }
 
-
-    if (result) {
-        result.innerHTML =
-            "Γίνεται αποθήκευση...";
-    }
-
+    showResultMessage(
+        "Γίνεται αποθήκευση..."
+    );
 
     try {
-
-        const isExistingCustomer =
-            currentCustomerId !== null;
-
-
-        const url =
-            isExistingCustomer
-                ? `/api/customer/${currentCustomerId}`
-                : "/api/customer";
-
-
-        const method =
-            isExistingCustomer
-                ? "PUT"
-                : "POST";
-
-
         const response =
             await fetch(
                 url,
@@ -1081,135 +953,88 @@ async function saveCustomer() {
                 }
             );
 
+        const responseText =
+            await response.text();
 
-        const data =
-            await response.json();
+        console.log(
+            "SERVER STATUS:",
+            response.status
+        );
 
+        console.log(
+            "SERVER RESPONSE:",
+            responseText
+        );
+
+        let data;
+
+        try {
+            data =
+                JSON.parse(
+                    responseText
+                );
+
+        } catch (jsonError) {
+            console.error(
+                "JSON ERROR:",
+                jsonError
+            );
+
+            showResultMessage(
+                "Ο server επέστρεψε μη έγκυρη απάντηση."
+            );
+
+            return;
+        }
 
         if (
             !response.ok ||
             !data.success
         ) {
-
-            if (result) {
-
-                result.innerHTML =
-                    data.message ||
-                    "Δεν έγινε η αποθήκευση.";
-            }
+            showResultMessage(
+                data.message ||
+                "Δεν έγινε η αποθήκευση."
+            );
 
             return;
         }
 
-
-        // =================================================
-        // ID ΠΕΛΑΤΗ
-        // =================================================
-
-        if (
-            data.customer &&
-            data.customer.id
-        ) {
-
-            currentCustomerId =
-                data.customer.id;
-        }
-
-
-        // =================================================
-        // ΑΝΑΖΗΤΗΣΗ = ΚΥΡΙΟ ΤΗΛΕΦΩΝΟ
-        // =================================================
-
-        if (phoneInput) {
-
-            phoneInput.value =
-                data.customer?.phone1 ||
-                customerData.phone1;
-        }
-
-
-        // =================================================
-        // ΞΑΝΑΓΕΜΙΖΟΥΜΕ ΤΗ ΦΟΡΜΑ
-        // =================================================
-
         if (data.customer) {
-
-            const savedCustomer = {
-                ...customerData,
-                ...data.customer
-            };
-
-
-            // Σε περίπτωση που το backend
-            // δεν επιστρέφει ακόμη τα χρησιδάνεια.
-
-            if (
-                data.customer.loan_heaters ===
-                undefined
-            ) {
-                savedCustomer.loan_heaters =
-                    customerData.loan_heaters;
-            }
-
-
-            if (
-                data.customer
-                    .loan_empty_cylinders ===
-                undefined
-            ) {
-                savedCustomer
-                    .loan_empty_cylinders =
-                    customerData
-                        .loan_empty_cylinders;
-            }
-
+            currentCustomerId =
+                data.customer.id ?? null;
 
             fillCustomerForm(
-                savedCustomer
+                data.customer
             );
+
+            if (phoneInput) {
+                phoneInput.value =
+                    data.customer.phone1 ||
+                    customerData.phone1;
+            }
         }
 
-
-        // =================================================
-        // ΜΗΝΥΜΑ ΕΠΙΤΥΧΙΑΣ
-        // =================================================
-
-        if (result) {
-
-            result.innerHTML = `
-                <div class="success-message">
-                    ${
-                        isExistingCustomer
-                            ? "Τα στοιχεία του πελάτη ενημερώθηκαν επιτυχώς."
-                            : "Ο πελάτης αποθηκεύτηκε επιτυχώς."
-                    }
-                </div>
-            `;
-        }
-
+        showResultMessage(
+            isExistingCustomer
+                ? "Τα στοιχεία του πελάτη ενημερώθηκαν επιτυχώς."
+                : "Ο πελάτης αποθηκεύτηκε επιτυχώς.",
+            "success-message"
+        );
 
         await updateCustomerNumber();
 
-
     } catch (error) {
-
         console.error(
             "Σφάλμα αποθήκευσης πελάτη:",
             error
         );
 
-
-        if (result) {
-
-            result.innerHTML =
-                "Δεν υπάρχει σύνδεση με τον server.";
-        }
-
+        showResultMessage(
+            "Σφάλμα επικοινωνίας κατά την αποθήκευση."
+        );
 
     } finally {
-
         if (saveCustomerBtn) {
-
             saveCustomerBtn.disabled =
                 false;
 
@@ -1255,19 +1080,15 @@ const customerDirectorySearch =
 // =========================================================
 
 async function openCustomerDirectory() {
-
     if (!customerDirectoryModal) {
         return;
     }
-
 
     customerDirectoryModal
         .classList
         .remove("hidden");
 
-
     if (customerDirectoryBody) {
-
         customerDirectoryBody.innerHTML = `
             <tr>
                 <td colspan="6">
@@ -1277,9 +1098,7 @@ async function openCustomerDirectory() {
         `;
     }
 
-
     try {
-
         const response =
             await fetch(
                 "/api/customers",
@@ -1288,18 +1107,14 @@ async function openCustomerDirectory() {
                 }
             );
 
-
         const data =
             await response.json();
-
 
         if (
             !response.ok ||
             !data.success
         ) {
-
             if (customerDirectoryBody) {
-
                 customerDirectoryBody.innerHTML = `
                     <tr>
                         <td colspan="6">
@@ -1312,32 +1127,28 @@ async function openCustomerDirectory() {
             return;
         }
 
-
         window.customerDirectoryList =
-            Array.isArray(data.customers)
+            Array.isArray(
+                data.customers
+            )
                 ? data.customers
                 : [];
-
 
         renderCustomerDirectory(
             window.customerDirectoryList
         );
 
-
     } catch (error) {
-
         console.error(
             "Σφάλμα ευρετηρίου πελατών:",
             error
         );
 
-
         if (customerDirectoryBody) {
-
             customerDirectoryBody.innerHTML = `
                 <tr>
                     <td colspan="6">
-                        Δεν υπάρχει σύνδεση με τον server.
+                        Σφάλμα επικοινωνίας με τον server.
                     </td>
                 </tr>
             `;
@@ -1353,17 +1164,14 @@ async function openCustomerDirectory() {
 function renderCustomerDirectory(
     customers
 ) {
-
     if (!customerDirectoryBody) {
         return;
     }
-
 
     if (
         !Array.isArray(customers) ||
         customers.length === 0
     ) {
-
         customerDirectoryBody.innerHTML = `
             <tr>
                 <td colspan="6">
@@ -1375,50 +1183,42 @@ function renderCustomerDirectory(
         return;
     }
 
-
     customerDirectoryBody.innerHTML =
         customers
             .map(
                 (customer, index) => `
-
                     <tr
                         data-customer-id="${customer.id}"
                     >
-
                         <td>
                             ${index + 1}
                         </td>
 
                         <td>
                             ${escapeHtml(
-                                customer.fullname ||
-                                ""
+                                customer.fullname || ""
                             )}
                         </td>
 
                         <td>
                             ${escapeHtml(
-                                customer.phone1 ||
-                                ""
+                                customer.phone1 || ""
                             )}
                         </td>
 
                         <td>
                             ${escapeHtml(
-                                customer.area ||
-                                ""
+                                customer.area || ""
                             )}
                         </td>
 
                         <td>
                             ${escapeHtml(
-                                customer.address ||
-                                ""
+                                customer.address || ""
                             )}
                         </td>
 
                         <td>
-
                             <button
                                 type="button"
                                 class="delete-customer-btn"
@@ -1426,9 +1226,7 @@ function renderCustomerDirectory(
                             >
                                 Διαγραφή
                             </button>
-
                         </td>
-
                     </tr>
                 `
             )
@@ -1437,30 +1235,25 @@ function renderCustomerDirectory(
 
 
 // =========================================================
-// ΑΝΑΖΗΤΗΣΗ ΜΕΣΑ ΣΤΟ ΕΥΡΕΤΗΡΙΟ
+// ΑΝΑΖΗΤΗΣΗ ΕΥΡΕΤΗΡΙΟΥ
 // =========================================================
 
 if (customerDirectorySearch) {
-
     customerDirectorySearch
         .addEventListener(
             "input",
             () => {
-
                 const searchText =
                     customerDirectorySearch
                         .value
                         .trim()
                         .toLowerCase();
 
-
                 const customers =
                     window.customerDirectoryList ||
                     [];
 
-
-                if (searchText === "") {
-
+                if (!searchText) {
                     renderCustomerDirectory(
                         customers
                     );
@@ -1468,11 +1261,9 @@ if (customerDirectorySearch) {
                     return;
                 }
 
-
                 const filteredCustomers =
                     customers.filter(
                         (customer) => {
-
                             const text = [
                                 customer.fullname,
                                 customer.phone1,
@@ -1485,13 +1276,11 @@ if (customerDirectorySearch) {
                                 .join(" ")
                                 .toLowerCase();
 
-
                             return text.includes(
                                 searchText
                             );
                         }
                     );
-
 
                 renderCustomerDirectory(
                     filteredCustomers
@@ -1506,17 +1295,13 @@ if (customerDirectorySearch) {
 // =========================================================
 
 function closeCustomerDirectory() {
-
     if (customerDirectoryModal) {
-
         customerDirectoryModal
             .classList
             .add("hidden");
     }
 
-
     if (customerDirectorySearch) {
-
         customerDirectorySearch.value =
             "";
     }
@@ -1528,122 +1313,88 @@ function closeCustomerDirectory() {
 // =========================================================
 
 if (customerDirectoryBody) {
-
-    customerDirectoryBody.addEventListener(
-        "click",
-        (event) => {
-
-            // =============================================
-            // ΔΙΑΓΡΑΦΗ
-            // =============================================
-
-            const deleteButton =
-                event.target.closest(
-                    ".delete-customer-btn"
-                );
-
-
-            if (deleteButton) {
-
-                event.stopPropagation();
-
-
-                const customerId =
-                    deleteButton
-                        .dataset
-                        .customerId;
-
-
-                deleteCustomer(
-                    customerId
-                );
-
-                return;
-            }
-
-
-            // =============================================
-            // ΕΠΙΛΟΓΗ ΠΕΛΑΤΗ
-            // =============================================
-
-            const row =
-                event.target.closest(
-                    "tr[data-customer-id]"
-                );
-
-
-            if (!row) {
-                return;
-            }
-
-
-            const customerId =
-                Number(
-                    row.dataset.customerId
-                );
-
-
-            const customer =
-                window.customerDirectoryList
-                    ?.find(
-                        item =>
-                            Number(item.id) ===
-                            customerId
+    customerDirectoryBody
+        .addEventListener(
+            "click",
+            (event) => {
+                const deleteButton =
+                    event.target.closest(
+                        ".delete-customer-btn"
                     );
 
+                if (deleteButton) {
+                    event.stopPropagation();
 
-            if (!customer) {
-                return;
+                    const customerId =
+                        deleteButton.dataset
+                            .customerId;
+
+                    deleteCustomer(
+                        customerId
+                    );
+
+                    return;
+                }
+
+                const row =
+                    event.target.closest(
+                        "tr[data-customer-id]"
+                    );
+
+                if (!row) {
+                    return;
+                }
+
+                const customerId =
+                    Number(
+                        row.dataset.customerId
+                    );
+
+                const customer =
+                    window.customerDirectoryList
+                        ?.find(
+                            (item) =>
+                                Number(item.id) ===
+                                customerId
+                        );
+
+                if (!customer) {
+                    return;
+                }
+
+                fillCustomerForm(
+                    customer
+                );
+
+                if (phoneInput) {
+                    phoneInput.value =
+                        customer.phone1 || "";
+                }
+
+                showResultMessage(
+                    `Επιλέχθηκε ο πελάτης: <strong>${escapeHtml(
+                        customer.fullname || ""
+                    )}</strong>`,
+                    "success-message"
+                );
+
+                closeCustomerDirectory();
+
+                if (newCustomerForm) {
+                    newCustomerForm
+                        .classList
+                        .remove("hidden");
+
+                    newCustomerForm
+                        .scrollIntoView({
+                            behavior:
+                                "smooth",
+                            block:
+                                "start"
+                        });
+                }
             }
-
-
-            fillCustomerForm(
-                customer
-            );
-
-
-            if (phoneInput) {
-
-                phoneInput.value =
-                    customer.phone1 ||
-                    "";
-            }
-
-
-            if (result) {
-
-                result.innerHTML = `
-                    <div class="success-message">
-                        Επιλέχθηκε ο πελάτης:
-                        <strong>
-                            ${escapeHtml(
-                                customer.fullname ||
-                                ""
-                            )}
-                        </strong>
-                    </div>
-                `;
-            }
-
-
-            closeCustomerDirectory();
-
-
-            if (newCustomerForm) {
-
-                newCustomerForm
-                    .classList
-                    .remove("hidden");
-
-
-                newCustomerForm
-                    .scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
-            }
-        }
-    );
+        );
 }
 
 
@@ -1654,20 +1405,16 @@ if (customerDirectoryBody) {
 async function deleteCustomer(
     customerId
 ) {
-
     const confirmed =
         confirm(
             "Σίγουρα θέλεις να διαγράψεις αυτόν τον πελάτη;"
         );
 
-
     if (!confirmed) {
         return;
     }
 
-
     try {
-
         const response =
             await fetch(
                 `/api/customer/${customerId}`,
@@ -1676,16 +1423,13 @@ async function deleteCustomer(
                 }
             );
 
-
         const data =
             await response.json();
-
 
         if (
             !response.ok ||
             !data.success
         ) {
-
             alert(
                 data.message ||
                 "Δεν έγινε η διαγραφή του πελάτη."
@@ -1694,51 +1438,31 @@ async function deleteCustomer(
             return;
         }
 
-
-        // Αν διαγράψαμε τον πελάτη
-        // που έχουμε ανοιχτό στη φόρμα
-
         if (
             currentCustomerId !== null &&
             Number(currentCustomerId) ===
             Number(customerId)
         ) {
-
             clearCustomerForm();
-
-            currentCustomerId = null;
-
 
             if (phoneInput) {
                 phoneInput.value = "";
             }
 
-
-            if (result) {
-
-                result.innerHTML = `
-                    <div class="success-message">
-                        Ο πελάτης διαγράφηκε.
-                    </div>
-                `;
-            }
+            showResultMessage(
+                "Ο πελάτης διαγράφηκε.",
+                "success-message"
+            );
         }
 
-
-        // Ξαναφόρτωση ευρετηρίου
-
         await openCustomerDirectory();
-
         await updateCustomerNumber();
 
-
     } catch (error) {
-
         console.error(
             "Σφάλμα διαγραφής πελάτη:",
             error
         );
-
 
         alert(
             "Σφάλμα: " +
@@ -1752,10 +1476,7 @@ async function deleteCustomer(
 // EVENT LISTENERS
 // =========================================================
 
-
-// Ευρετήριο
 if (customerDirectoryBtn) {
-
     customerDirectoryBtn
         .addEventListener(
             "click",
@@ -1764,9 +1485,7 @@ if (customerDirectoryBtn) {
 }
 
 
-// Κλείσιμο ευρετηρίου
 if (closeCustomerDirectoryBtn) {
-
     closeCustomerDirectoryBtn
         .addEventListener(
             "click",
@@ -1775,56 +1494,67 @@ if (closeCustomerDirectoryBtn) {
 }
 
 
-// Αναζήτηση
 if (searchBtn) {
-
-    searchBtn.addEventListener(
-        "click",
-        searchCustomer
-    );
-}
-
-
-// Αποθήκευση πελάτη
-if (saveCustomerBtn) {
-
-    saveCustomerBtn.addEventListener(
-        "click",
-        saveCustomer
-    );
-}
-
-
-// Enter στο πεδίο αναζήτησης
-if (phoneInput) {
-
-    phoneInput.addEventListener(
-        "keydown",
-        (event) => {
-
-            if (event.key === "Enter") {
-
-                event.preventDefault();
-
-                searchCustomer();
-            }
-        }
-    );
-}
-
-
-// Νέος πελάτης
-if (newCustomerBtn) {
-
-    newCustomerBtn.addEventListener(
-        "click",
-        startNewCustomer
-    );
+    searchBtn
+        .addEventListener(
+            "click",
+            searchCustomer
+        );
 }
 
 
 // =========================================================
-// ΑΡΧΙΚΗ ΕΝΗΜΕΡΩΣΗ ΑΡΙΘΜΟΥ ΠΕΛΑΤΩΝ
+// ΚΟΥΜΠΙ ΑΠΟΘΗΚΕΥΣΗΣ
+// =========================================================
+
+if (saveCustomerBtn) {
+    console.log(
+        "saveCustomerBtn ΒΡΕΘΗΚΕ:",
+        saveCustomerBtn
+    );
+
+    saveCustomerBtn
+        .addEventListener(
+            "click",
+            saveCustomer
+        );
+
+} else {
+    console.error(
+        "ΔΕΝ ΒΡΕΘΗΚΕ ΤΟ saveCustomerBtn"
+    );
+}
+
+
+if (phoneInput) {
+    phoneInput
+        .addEventListener(
+            "keydown",
+            (event) => {
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+                    event.preventDefault();
+
+                    searchCustomer();
+                }
+            }
+        );
+}
+
+
+if (newCustomerBtn) {
+    newCustomerBtn
+        .addEventListener(
+            "click",
+            startNewCustomer
+        );
+}
+
+
+// =========================================================
+// ΑΡΧΙΚΗ ΕΝΗΜΕΡΩΣΗ
 // =========================================================
 
 updateCustomerNumber();

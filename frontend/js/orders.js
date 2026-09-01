@@ -962,3 +962,53 @@ setInterval(
     checkScheduledOrders,
     5000
 );
+
+// =========================================================
+// ΚΑΘΑΡΙΣΜΟΣ ΠΙΝΑΚΑ ΠΑΡΑΓΓΕΛΙΑΣ ΦΙΑΛΩΝ
+// =========================================================
+
+const clearOrderTableBtn =
+    document.getElementById("clearOrderTableBtn");
+
+if (clearOrderTableBtn) {
+
+    clearOrderTableBtn.addEventListener(
+        "click",
+        () => {
+
+            const orderFieldIds = [
+                "delivery3kg",
+                "delivery10kgMix",
+                "delivery10kgPropane",
+                "delivery13kg",
+                "delivery25kg",
+
+                "return3kg",
+                "return10kgMix",
+                "return10kgPropane",
+                "return13kg",
+                "return25kg"
+            ];
+
+            orderFieldIds.forEach(
+                (id) => {
+                    const input =
+                        document.getElementById(id);
+
+                    if (input) {
+                        input.value = "";
+                    }
+                }
+            );
+
+            const orderNotes =
+                document.getElementById("orderNotes");
+
+            if (orderNotes) {
+                orderNotes.value = "";
+            }
+        }
+    );
+}
+// PRODUCT BUTTONS
+document.querySelectorAll('.order-product-btn').forEach((button)=>{button.addEventListener('click',()=>{const input=document.getElementById(button.dataset.target);if(!input)return;input.value=Number(input.value||0)+1;});});

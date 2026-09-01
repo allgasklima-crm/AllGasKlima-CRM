@@ -1,0 +1,149 @@
+/* =========================================================
+   ΤΥΠΟΣ ΠΕΛΑΤΗ - ΛΙΑΝΙΚΗ / ΧΟΝΔΡΙΚΗ
+========================================================= */
+
+.customer-type-section {
+    margin: 18px 0;
+}
+
+.customer-type-section > strong {
+    display: block;
+    margin-bottom: 12px;
+}
+
+.customer-type-buttons {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+}
+
+.customer-type-button {
+    flex: 1;
+    cursor: pointer;
+}
+
+.customer-type-button input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.customer-type-button span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 58px;
+
+    background: #ffffff;
+    border: 2px solid #d7dce5;
+    border-radius: 10px;
+
+    color: #5f6878;
+    font-size: 16px;
+    font-weight: 700;
+
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.customer-type-button:hover span {
+    border-color: #6f2dbd;
+    color: #6f2dbd;
+}
+
+.customer-type-button input:checked + span {
+    background: #6f2dbd;
+    border-color: #6f2dbd;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(111, 45, 189, 0.20);
+}
+
+@media (max-width: 600px) {
+    .customer-type-buttons {
+        gap: 8px;
+    }
+
+    .customer-type-button span {
+        height: 52px;
+        font-size: 15px;
+    }
+}
+
+/* =========================================================
+   ΚΑΘΑΡΙΣΜΟΣ ΠΙΝΑΚΑ ΠΑΡΑΓΓΕΛΙΑΣ
+========================================================= */
+
+.clear-order-table-btn {
+    margin-left: auto;
+    padding: 8px 14px;
+
+    background: #ffffff;
+    border: 1px solid #7c3aed;
+    border-radius: 8px;
+
+    color: #6d28d9;
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.clear-order-table-btn:hover {
+    background: #f5f3ff;
+    border-color: #6d28d9;
+}
+
+@media (max-width: 700px) {
+    .clear-order-table-btn {
+        padding: 7px 10px;
+        font-size: 13px;
+    }
+}
+
+/* =========================================================
+   ΑΠΟΣΤΑΣΗ / ΧΡΟΝΟΣ ΔΙΑΔΡΟΜΗΣ
+========================================================= */
+
+.route-info-box {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border: 1px solid #d7dce5;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.route-info-title {
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.route-info-main {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.route-info-delivery {
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+@media (max-width: 700px) {
+    .route-info-box {
+        padding: 10px 12px;
+    }
+
+    .route-info-main {
+        gap: 10px;
+        font-size: 15px;
+    }
+
+    .route-info-delivery {
+        font-size: 13px;
+    }
+}

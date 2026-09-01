@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="el">
 
 <head>
@@ -8,6 +8,7 @@
     <title>AllGasKlima CRM</title>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/customers.css">
 </head>
 
 <body>
@@ -289,11 +290,25 @@
 
                                 <button
                                     type="button"
-                                    class="btn btn-map"
+                                    id="openGoogleMapsBtn" class="btn btn-map"
                                 >
                                     📍 Άνοιγμα Google Maps
                                 </button>
+                            <div id="routeInfoBox" class="route-info-box">
+                                <div class="route-info-title">
+                                    Απόσταση και χρόνος διαδρομής
+                                </div>
 
+                                <div class="route-info-main">
+                                    <span id="routeDistance">— km</span>
+                                    <span id="routeDuration">— λεπτά</span>
+                                </div>
+
+                                <div class="route-info-delivery">
+                                    Παράδοση περίπου σε
+                                    <strong id="routeDeliveryTime">— λεπτά</strong>
+                                </div>
+                            </div>
                             </div>
 
                         </div>
@@ -480,30 +495,34 @@
      ΤΥΠΟΣ ΠΕΛΑΤΗ
 ================================================== -->
 
-<div style="margin: 18px 0;">
+<div class="customer-type-section">
 
     <strong>Τύπος πελάτη:</strong>
 
-    <label style="margin-left: 15px;">
-        <input
-            type="radio"
-            name="customerType"
-            value="retail"
-            id="customerTypeRetail"
-            checked
-        >
-        Λιανική
-    </label>
+    <div class="customer-type-buttons">
 
-    <label style="margin-left: 15px;">
-        <input
-            type="radio"
-            name="customerType"
-            value="wholesale"
-            id="customerTypeWholesale"
-        >
-        Χονδρική
-    </label>
+        <label class="customer-type-button">
+            <input
+                type="radio"
+                name="customerType"
+                value="retail"
+                id="customerTypeRetail"
+                checked
+            >
+            <span>👤 Λιανική</span>
+        </label>
+
+        <label class="customer-type-button">
+            <input
+                type="radio"
+                name="customerType"
+                value="wholesale"
+                id="customerTypeWholesale"
+            >
+            <span>🏢 Χονδρική</span>
+        </label>
+
+    </div>
 
 </div>
 
@@ -552,6 +571,15 @@
                             </h2>
                         </div>
 
+            <button
+                type="button"
+                id="clearOrderTableBtn"
+                class="clear-order-table-btn"
+                title="Καθαρίζει την παραγγελία"
+            >
+                🗑 Καθαρισμός πίνακα
+            </button>
+
                     </div>
 
 
@@ -583,7 +611,7 @@
 
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
 
-                                <span>3kg Μίγμα</span>
+                                <button type="button" class="order-product-btn" data-target="delivery3kg">3kg Μίγμα</button>
 
                                 <input
                                     type="text"
@@ -599,7 +627,7 @@
 
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
 
-                                <span>10kg Μίγμα</span>
+                                <button type="button" class="order-product-btn" data-target="delivery10kgMix">10kg Μίγμα</button>
 
                                 <input
                                     type="text"
@@ -615,7 +643,7 @@
 
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
 
-                                <span>10kg Προπάνιο</span>
+                                <button type="button" class="order-product-btn" data-target="delivery10kgPropane">10kg Προπάνιο</button>
 
                                 <input
                                     type="text"
@@ -631,7 +659,7 @@
 
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
 
-                                <span>13kg Προπάνιο</span>
+                                <button type="button" class="order-product-btn" data-target="delivery13kg">13kg Προπάνιο</button>
 
                                 <input
                                     type="text"
@@ -647,7 +675,7 @@
 
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
 
-                                <span>25kg Προπάνιο</span>
+                                <button type="button" class="order-product-btn" data-target="delivery25kg">25kg Προπάνιο</button>
 
                                 <input
                                     type="text"
@@ -681,7 +709,7 @@
 
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
 
-                                <span>3kg</span>
+                                <button type="button" class="order-product-btn" data-target="return3kg">3kg</button>
 
                                 <input
                                     type="text"
@@ -697,7 +725,7 @@
 
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
 
-                                <span>10kg Μίγμα</span>
+                                <button type="button" class="order-product-btn" data-target="return10kgMix">10kg Μίγμα</button>
 
                                 <input
                                     type="text"
@@ -713,7 +741,7 @@
 
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
 
-                                <span>10kg Προπάνιο</span>
+                                <button type="button" class="order-product-btn" data-target="return10kgPropane">10kg Προπάνιο</button>
 
                                 <input
                                     type="text"
@@ -729,7 +757,7 @@
 
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
 
-                                <span>13kg</span>
+                                <button type="button" class="order-product-btn" data-target="return13kg">13kg</button>
 
                                 <input
                                     type="text"
@@ -745,7 +773,7 @@
 
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
 
-                                <span>25kg</span>
+                                <button type="button" class="order-product-btn" data-target="return25kg">25kg</button>
 
                                 <input
                                     type="text"
@@ -1140,6 +1168,7 @@
 <script src="js/orders.js"></script>
 <script src="js/calls.js"></script>
 <script src="js/dashboard.js"></script>
+<script src="js/route-info.js"></script>
 <script src="js/app.js"></script>
 
 </html>
