@@ -1,0 +1,104 @@
+[1mdiff --git a/backend/caller_listener.py b/backend/caller_listener.py[m
+[1mindex f3c9054..0dd5e8b 100644[m
+[1m--- a/backend/caller_listener.py[m
+[1m+++ b/backend/caller_listener.py[m
+[36m@@ -172,7 +172,70 @@[m [mdef send_number_to_crm(phone):[m
+         phone[m
+     )[m
+ [m
+[32m+[m[32mdef bring_crm_to_front():[m
+[32m+[m[32m    try:[m
+[32m+[m[32m        import ctypes[m
+ [m
+[32m+[m[32m        user32 = ctypes.windll.user32[m
+[32m+[m[32m        kernel32 = ctypes.windll.kernel32[m
+[32m+[m
+[32m+[m[32m        hwnd = user32.FindWindowW([m
+[32m+[m[32m            None,[m
+[32m+[m[32m            "AllGasKlima CRM"[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m        if not hwnd:[m
+[32m+[m[32m            print([m
+[32m+[m[32m                "CRM window not found."[m
+[32m+[m[32m            )[m
+[32m+[m[32m            return[m
+[32m+[m
+[32m+[m[32m        SW_MAXIMIZE = 3[m
+[32m+[m
+[32m+[m[32m        user32.ShowWindow([m
+[32m+[m[32m            hwnd,[m
+[32m+[m[32m            SW_MAXIMIZE[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m        foreground_hwnd = user32.GetForegroundWindow()[m
+[32m+[m
+[32m+[m[32m        current_thread = kernel32.GetCurrentThreadId()[m
+[32m+[m
+[32m+[m[32m        foreground_thread = user32.GetWindowThreadProcessId([m
+[32m+[m[32m            foreground_hwnd,[m
+[32m+[m[32m            None[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m        user32.AttachThreadInput([m
+[32m+[m[32m            current_thread,[m
+[32m+[m[32m            foreground_thread,[m
+[32m+[m[32m            True[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m        user32.BringWindowToTop([m
+[32m+[m[32m            hwnd[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m        user32.SetForegroundWindow([m
+[32m+[m[32m            hwnd[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m        user32.SetFocus([m
+[32m+[m[32m            hwnd[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m        user32.AttachThreadInput([m
+[32m+[m[32m            current_thread,[m
+[32m+[m[32m            foreground_thread,[m
+[32m+[m[32m            False[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m    except Exception as error:[m
+[32m+[m[32m        print([m
+[32m+[m[32m            "CRM focus error:",[m
+[32m+[m[32m            error[m
+[32m+[m[32m        )[m
+[32m+[m[41m        [m
+ def main():[m
+     print([m
+         "AllGasKlima Call Listener ξεκίνησε..."[m
+[36m@@ -215,7 +278,7 @@[m [mdef main():[m
+                         send_number_to_crm([m
+                             current_phone[m
+                         )[m
+[31m-[m
+[32m+[m[32m                        bring_crm_to_front()[m
+                     except requests.RequestException as crm_error:[m
+                         print([m
+                             "Δεν στάλθηκε ο αριθμός στο CRM:",[m
+[1mdiff --git a/frontend/index.html b/frontend/index.html[m
+[1mindex 7cdcb42..41e2fc9 100644[m
+[1m--- a/frontend/index.html[m
+[1m+++ b/frontend/index.html[m
+[36m@@ -62,7 +62,7 @@[m
+                 <div class="field-group phone-search-field">[m
+ [m
+                     <label for="phone">[m
+[31m-                        Αριθμός τηλεφώνου[m
+[32m+[m[32m                        Αριθμός τηλεφώνου - Ονοματεπώνυμο[m
+                     </label>[m
+ [m
+                     <input[m
+[36m@@ -1173,4 +1173,4 @@[m
+ <script src="js/route-info.js"></script>[m
+ <script src="js/app.js"></script>[m
+ [m
+[31m-</html>[m
+\ No newline at end of file[m
+[32m+[m[32m</html>[m

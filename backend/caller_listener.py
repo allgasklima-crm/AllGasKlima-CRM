@@ -172,7 +172,70 @@ def send_number_to_crm(phone):
         phone
     )
 
+def bring_crm_to_front():
+    try:
+        import ctypes
 
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+
+        hwnd = user32.FindWindowW(
+            None,
+            "AllGasKlima CRM"
+        )
+
+        if not hwnd:
+            print(
+                "CRM window not found."
+            )
+            return
+
+        SW_MAXIMIZE = 3
+
+        user32.ShowWindow(
+            hwnd,
+            SW_MAXIMIZE
+        )
+
+        foreground_hwnd = user32.GetForegroundWindow()
+
+        current_thread = kernel32.GetCurrentThreadId()
+
+        foreground_thread = user32.GetWindowThreadProcessId(
+            foreground_hwnd,
+            None
+        )
+
+        user32.AttachThreadInput(
+            current_thread,
+            foreground_thread,
+            True
+        )
+
+        user32.BringWindowToTop(
+            hwnd
+        )
+
+        user32.SetForegroundWindow(
+            hwnd
+        )
+
+        user32.SetFocus(
+            hwnd
+        )
+
+        user32.AttachThreadInput(
+            current_thread,
+            foreground_thread,
+            False
+        )
+
+    except Exception as error:
+        print(
+            "CRM focus error:",
+            error
+        )
+        
 def main():
     print(
         "AllGasKlima Call Listener ξεκίνησε..."
@@ -215,7 +278,7 @@ def main():
                         send_number_to_crm(
                             current_phone
                         )
-
+                        bring_crm_to_front()
                     except requests.RequestException as crm_error:
                         print(
                             "Δεν στάλθηκε ο αριθμός στο CRM:",
