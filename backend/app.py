@@ -1,7 +1,9 @@
-﻿from datetime import datetime
+﻿from datetime import datetime, timedelta
 from pathlib import Path
 import sqlite3
-
+import threading
+import time
+import winsound
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -29,6 +31,12 @@ DATABASE_PATH = (
     / "allgasklima.db"
 )
 
+HISTORY_DATABASE_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "history"
+    / "allgasklima_history.db"
+)
+
 
 # =========================================================
 # ΣΥΝΔΕΣΗ ΒΑΣΗΣ
@@ -42,16 +50,306 @@ def get_connection():
     connection.row_factory = sqlite3.Row
     return connection
 
+def get_history_connection():
+    connection = sqlite3.connect(
+        HISTORY_DATABASE_PATH,
+        timeout=10
+    )
+    connection.row_factory = sqlite3.Row
+    return connection
+
 
 # =========================================================
 # ΒΟΗΘΗΤΙΚΕΣ ΣΥΝΑΡΤΗΣΕΙΣ
 # =========================================================
+
+def archive_old_orders():
+    connection = get_connection()
+    history_connection = get_history_connection()
+
+    rows = connection.execute(
+        """
+        SELECT *
+        FROM orders
+
+        WHERE status IN (
+            'completed',
+            'cleared'
+        )
+
+        AND datetime(created_at) <= datetime(
+            'now',
+            '-24 hours'
+        )
+        """
+    ).fetchall()
+    
+    archived = 0
+    deleted = 0
+
+    for row in rows:
+        values = tuple(row)
+
+        history_connection.execute(
+            """
+            INSERT OR IGNORE
+            INTO orders_history
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            """,
+            values
+        )
+
+        history_connection.commit()
+
+        found = history_connection.execute(
+            """
+            SELECT id
+            FROM orders_history
+            WHERE id = ?
+            LIMIT 1
+            """,
+            (
+                row["id"],
+            )
+        ).fetchone()
+
+        if found:
+            cursor = connection.execute(
+                """
+                DELETE FROM orders
+                WHERE id = ?
+                AND status IN (
+                    'completed',
+                    'cleared'
+                )
+                """,
+                (
+                    row["id"],
+                )
+            )
+
+            connection.commit()
+
+            if cursor.rowcount > 0:
+                deleted += 1
+
+            archived += 1
+
+    history_connection.close()
+    connection.close()
+
+    return {
+        "archived": archived,
+        "deleted": deleted
+    }
+
+def archive_old_calls():
+    connection = get_connection()
+    history_connection = get_history_connection()
+
+    rows = connection.execute(
+        """
+        SELECT *
+        FROM call_history
+
+        WHERE id NOT IN (
+            SELECT id
+            FROM call_history
+            ORDER BY id DESC
+            LIMIT 20
+        )
+
+        ORDER BY id ASC
+        """
+    ).fetchall()
+
+    archived = 0
+    deleted = 0
+
+    for row in rows:
+        history_connection.execute(
+            """
+            INSERT OR IGNORE
+            INTO call_history_archive (
+                id,
+                phone,
+                called_at,
+                deleted
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                row["id"],
+                row["phone"],
+                row["called_at"],
+                row["deleted"]
+            )
+        )
+
+        history_connection.commit()
+
+        found = history_connection.execute(
+            """
+            SELECT id
+            FROM call_history_archive
+            WHERE id = ?
+            LIMIT 1
+            """,
+            (
+                row["id"],
+            )
+        ).fetchone()
+
+        if found:
+            cursor = connection.execute(
+                """
+                DELETE FROM call_history
+                WHERE id = ?
+                """,
+                (
+                    row["id"],
+                )
+            )
+
+            connection.commit()
+
+            if cursor.rowcount > 0:
+                deleted += 1
+
+            archived += 1
+
+    history_connection.close()
+    connection.close()
+
+    return {
+        "archived": archived,
+        "deleted": deleted
+    }
+
+notified_backend_reminders = set()
+
+
+def reminder_worker():
+    while True:
+        try:
+            connection = get_connection()
+
+            rows = connection.execute(
+                """
+                SELECT
+                    id,
+                    scheduled_date,
+                    scheduled_time,
+                    reminder_minutes
+                FROM orders
+                WHERE status = 'scheduled'
+                AND scheduled_date IS NOT NULL
+                AND scheduled_time IS NOT NULL
+                """
+            ).fetchall()
+
+            connection.close()
+
+            now = datetime.now()
+            should_ring = False
+
+            for row in rows:
+                try:
+                    delivery_time = datetime.strptime(
+                        f"{row['scheduled_date']} {row['scheduled_time']}",
+                        "%d/%m/%Y %H:%M"
+                    )
+
+                    reminder_minutes = int(
+                        row["reminder_minutes"] or 0
+                    )
+
+                    reminder_time = (
+                        delivery_time
+                        - timedelta(minutes=reminder_minutes)
+                    )
+
+                    reminder_key = (
+                        row["id"],
+                        row["scheduled_date"],
+                        row["scheduled_time"]
+                    )
+
+                    if (
+                        now >= reminder_time
+                        and reminder_key
+                        not in notified_backend_reminders
+                    ):
+                        notified_backend_reminders.add(
+                            reminder_key
+                        )
+                        should_ring = True
+
+                except Exception as error:
+                    print(
+                        "REMINDER ROW ERROR:",
+                        row["id"],
+                        error
+                    )
+
+            if should_ring:
+                sound_path = (
+                    Path(__file__).resolve().parent.parent
+                    / "frontend"
+                    / "audio"
+                    / "reminder.wav"
+                )
+
+                print(
+    "RINGING REMINDER:",
+    reminder_key
+)
+
+                winsound.PlaySound(
+                    str(sound_path),
+                    winsound.SND_FILENAME
+                    | winsound.SND_ASYNC
+                )
+
+        except Exception as error:
+            print(
+                "REMINDER WORKER ERROR:",
+                error
+            )
+
+        time.sleep(2)
+
+def archive_worker():
+    while True:
+        try:
+            result = archive_old_orders()
+
+            calls_result = archive_old_calls()
+
+            print(
+                "AUTO ARCHIVE:",
+                result,
+                calls_result
+            )
+
+        except Exception as error:
+            print(
+                "AUTO ARCHIVE ERROR:",
+                error
+            )
+
+        time.sleep(3600)
 
 def safe_int(value, default=0):
     try:
         return int(value or default)
     except (TypeError, ValueError):
         return default
+
 
 
 def safe_non_negative_int(value):
@@ -1887,10 +2185,13 @@ def get_today_orders():
                 'localtime'
             )
 
-            AND COALESCE(
+           AND COALESCE(
                 status,
                 'new'
-            ) != 'cleared'
+            ) NOT IN (
+                'cleared',
+                'scheduled'
+            )
 
             ORDER BY
                 created_at DESC,
@@ -1948,7 +2249,7 @@ def get_customer_history(
                 "Ο πελάτης δεν βρέθηκε."
         }), 404
 
-    rows = connection.execute(
+    active_rows = connection.execute(
             """
             SELECT *
 
@@ -1965,7 +2266,38 @@ def get_customer_history(
             )
         ).fetchall()
 
+    history_connection = get_history_connection()
+
+    archived_rows = history_connection.execute(
+            """
+            SELECT *
+
+            FROM orders_history
+
+            WHERE customer_id = ?
+
+            ORDER BY
+                created_at DESC,
+                id DESC
+            """,
+            (
+                customer_id,
+            )
+        ).fetchall()
+
+    history_connection.close()
     connection.close()
+
+    rows = list(active_rows) + list(archived_rows)
+
+    rows.sort(
+        key=lambda row: (
+            row["created_at"] or "",
+            row["id"] or 0
+        ),
+        reverse=True
+    )
+        
 
     return jsonify({
         "success":
@@ -2115,7 +2447,10 @@ def clear_today_orders():
             AND COALESCE(
                 status,
                 'new'
-            ) != 'cleared'
+            ) NOT IN (
+                'cleared',
+                'scheduled'
+            )
             """
         )
 
@@ -2495,6 +2830,20 @@ create_order_extra_columns()
 # =========================================================
 
 if __name__ == "__main__":
+
+    archive_thread = threading.Thread(
+        target=archive_worker,
+        daemon=True
+    )
+
+    archive_thread.start()
+
+    reminder_thread = threading.Thread(
+        target=reminder_worker,
+        daemon=True
+    )
+
+    reminder_thread.start()
 
     app.run(
         host="127.0.0.1",

@@ -432,4 +432,5 @@ if (callHistoryList) {
         }
     );
 }
+loadCallHistory();
 initializeIncomingCallWatcher();

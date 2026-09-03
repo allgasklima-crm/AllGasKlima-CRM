@@ -395,9 +395,24 @@ async function loadTodayOrders() {
             }
 
             const createdAt = order.created_at || "";
-            const time = createdAt.includes(" ")
-                ? createdAt.split(" ")[1].slice(0, 5)
-                : createdAt;
+
+        let time = "";
+
+        if (createdAt) {
+    const utcDate = new Date(
+        createdAt.replace(" ", "T") + "Z"
+    );
+
+    time = utcDate.toLocaleTimeString(
+        "el-GR",
+        {
+            timeZone: "Europe/Athens",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false
+        }
+    );
+}
 
             const row = document.createElement("tr");
 
@@ -773,83 +788,7 @@ try {
     );
 }
 
-let reminderAudioContext = null;
 
-function playReminderSound() {
-    try {
-        if (!reminderAudioContext) {
-            reminderAudioContext =
-                new (
-                    window.AudioContext ||
-                    window.webkitAudioContext
-                )();
-        }
-
-        if (reminderAudioContext.state === "suspended") {
-            reminderAudioContext.resume();
-        }
-
-        const ctx = reminderAudioContext;
-        const start = ctx.currentTime;
-
-        const ringBurst = (delay) => {
-            const osc1 = ctx.createOscillator();
-            const osc2 = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            osc1.type = "sine";
-            osc2.type = "sine";
-
-            osc1.frequency.value = 440;
-            osc2.frequency.value = 480;
-
-            osc1.connect(gain);
-            osc2.connect(gain);
-            gain.connect(ctx.destination);
-
-            const t = start + delay;
-
-            gain.gain.setValueAtTime(0.001, t);
-
-            for (let i = 0; i < 10; i++) {
-                const pulse = t + i * 0.10;
-
-                gain.gain.linearRampToValueAtTime(
-                    0.35,
-                    pulse + 0.025
-                );
-
-                gain.gain.linearRampToValueAtTime(
-                    0.06,
-                    pulse + 0.075
-                );
-            }
-
-            gain.gain.linearRampToValueAtTime(
-                0.001,
-                t + 1.0
-            );
-
-            osc1.start(t);
-            osc2.start(t);
-
-            osc1.stop(t + 1.05);
-            osc2.stop(t + 1.05);
-        };
-
-        ringBurst(0);
-        ringBurst(1.25);
-
-        ringBurst(3.0);
-        ringBurst(4.25);
-
-    } catch (error) {
-        console.error(
-            "Σφάλμα ήχου ειδοποίησης:",
-            error
-        );
-    }
-}
 
 let notifiedScheduledOrders = new Set();
 
@@ -918,10 +857,9 @@ async function checkScheduledOrders() {
                 `${order.id}-${order.scheduled_date}-${order.scheduled_time}`;
 
             if (
-                now >= reminderTime &&
-                now <= deliveryDateTime &&
-                !notifiedScheduledOrders.has(orderKey)
-            ) {
+                    now >= reminderTime &&
+                    !notifiedScheduledOrders.has(orderKey)
+                ) {
                 notifiedScheduledOrders.add(
                 orderKey
                 );

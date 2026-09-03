@@ -4,3 +4,4 @@ __pycache__/
 *.lnk
 
 database/*.db
+history/*.db
