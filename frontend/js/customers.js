@@ -899,6 +899,36 @@ async function saveCustomer(event) {
         return;
     }
 
+        if (!customerData.area) {
+            showResultMessage(
+                "Η περιοχή είναι υποχρεωτική."
+            );
+
+            areaInput?.focus();
+
+            return;
+        }
+
+        if (!customerData.address) {
+            showResultMessage(
+                "Η διεύθυνση είναι υποχρεωτική."
+            );
+
+            addressInput?.focus();
+
+            return;
+        }
+
+        if (!customerData.floor) {
+            showResultMessage(
+                "Ο όροφος είναι υποχρεωτικός."
+            );
+
+            floorInput?.focus();
+
+            return;
+        }
+
     // =====================================================
     // POST / PUT
     // =====================================================

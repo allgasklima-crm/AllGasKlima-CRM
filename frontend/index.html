@@ -837,6 +837,15 @@
         🕒 Προγραμματισμένη παραγγελία
     </button>
 
+    <button
+        type="button"
+        id="viewScheduledOrdersBtn"
+        class="btn btn-warning"
+        style="width:100%;"
+    >
+        📅 Προγραμματισμένες παραγγελίες
+    </button>
+
 </div>
 
                 <!-- =================================================
@@ -1037,21 +1046,22 @@
         <button
             type="button"
             id="deleteAllTodayOrdersBtn"
-            class="directory-close"
+            class="btn btn-danger"
             title="Διαγραφή όλων των σημερινών παραγγελιών"
         >
-            ✓
+        Διαγραφή όλων
         </button>
 
         <button
-            type="button"
-            id="closeTodayOrdersBtn"
-            class="directory-close"
-        >
-            ×
-        </button>
+    type="button"
+    id="closeTodayOrdersBtn"
+    class="directory-close"
+    >
+        ×
+    </button>
+        
+        </div>
     </div>
-</div>
 
         <div class="directory-table-wrap">
             <table class="directory-table">
@@ -1072,6 +1082,58 @@
                     <!-- Οι σημερινές παραγγελίες θα μπαίνουν εδώ αυτόματα -->
                 </tbody>
             </table>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΕΣ ΠΑΡΑΓΓΕΛΙΕΣ -->
+<div id="scheduledOrdersModal" class="directory-modal hidden">
+
+    <div class="directory-window">
+
+        <div class="directory-header">
+
+            <div>
+                <span class="section-kicker">ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΕΣ</span>
+                <h2>Προγραμματισμένες παραγγελίες</h2>
+            </div>
+
+            <button
+                type="button"
+                id="closeScheduledOrdersBtn"
+                class="directory-close"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div class="directory-table-wrap">
+
+            <table class="directory-table">
+
+                <thead>
+                    <tr>
+                        <th>Α/Α</th>
+                        <th>Ημερομηνία</th>
+                        <th>Ώρα</th>
+                        <th>Πελάτης</th>
+                        <th>Τηλέφωνο</th>
+                        <th>Περιοχή</th>
+                        <th>Διεύθυνση</th>
+                        <th>Παραγγελία</th>
+                        <th>Ενέργειες</th>
+                    </tr>
+                </thead>
+
+                <tbody id="scheduledOrdersBody">
+                    <!-- Οι προγραμματισμένες παραγγελίες θα μπαίνουν εδώ αυτόματα -->
+                </tbody>
+
+            </table>
+
         </div>
 
     </div>

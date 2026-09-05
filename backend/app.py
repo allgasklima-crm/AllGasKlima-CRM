@@ -2421,6 +2421,46 @@ def complete_order(
 
 
 # =========================================================
+# ΔΙΑΓΡΑΦΗ ΜΙΑΣ ΣΗΜΕΡΙΝΗΣ ΠΑΡΑΓΓΕΛΙΑΣ
+# =========================================================
+
+@app.delete(
+    "/api/orders/<int:order_id>"
+)
+def delete_order(
+    order_id
+):
+    connection = get_connection()
+
+    cursor = connection.execute(
+        """
+        DELETE FROM orders
+        WHERE id = ?
+        AND status != 'scheduled'
+        """,
+        (
+            order_id,
+        )
+    )
+
+    connection.commit()
+
+    deleted = cursor.rowcount
+
+    connection.close()
+
+    if deleted == 0:
+        return jsonify({
+            "success": False,
+            "message": "Η παραγγελία δεν βρέθηκε."
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "message": "Η παραγγελία διαγράφηκε."
+    })
+
+# =========================================================
 # ΚΑΘΑΡΙΣΜΟΣ ΣΗΜΕΡΙΝΩΝ ΠΑΡΑΓΓΕΛΙΩΝ
 # =========================================================
 
@@ -2813,6 +2853,45 @@ def get_scheduled_orders():
             ]
     })
 
+
+# =========================================================
+# ΔΙΑΓΡΑΦΗ ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΗΣ ΠΑΡΑΓΓΕΛΙΑΣ
+# =========================================================
+
+@app.delete(
+    "/api/orders/scheduled/<int:order_id>"
+)
+def delete_scheduled_order(order_id):
+
+    connection = get_connection()
+
+    cursor = connection.execute(
+        """
+        DELETE FROM orders
+        WHERE id = ?
+        AND status = 'scheduled'
+        """,
+        (
+            order_id,
+        )
+    )
+
+    connection.commit()
+
+    deleted = cursor.rowcount > 0
+
+    connection.close()
+
+    if not deleted:
+        return jsonify({
+            "success": False,
+            "message": "Η προγραμματισμένη παραγγελία δεν βρέθηκε."
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "message": "Η προγραμματισμένη παραγγελία διαγράφηκε."
+    })
 
 # =========================================================
 # ΑΡΧΙΚΟΠΟΙΗΣΗ ΒΑΣΗΣ

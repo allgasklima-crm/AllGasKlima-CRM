@@ -132,6 +132,37 @@ if (saveOrderBtn) {
                         .trim()
             };
 
+                        if (!orderData.address) {
+                    alert(
+                        "Συμπλήρωσε τη διεύθυνση του πελάτη."
+                    );
+
+                    return;
+                }
+
+                if (!orderData.floor) {
+                    alert(
+                        "Συμπλήρωσε τον όροφο του πελάτη."
+                    );
+
+                    return;
+                }
+
+            
+            const hasDelivery =
+    Number(orderData.delivery_3kg) > 0 ||
+    Number(orderData.delivery_10kg_mix) > 0 ||
+    Number(orderData.delivery_10kg_propane) > 0 ||
+    Number(orderData.delivery_13kg) > 0 ||
+    Number(orderData.delivery_25kg) > 0;
+
+    if (!hasDelivery) {
+        alert(
+            "Βάλε τουλάχιστον μία φιάλη στην παραγγελία."
+        );
+
+        return;
+    }
 
             try {
 
@@ -432,39 +463,105 @@ async function loadTodayOrders() {
                 <td>${order.address || ""}</td>
                 <td>${products.join("<br>") || "-"}</td>
                 <td class="order-status">
-                    ${order.status === "completed" ? "Εκτελέστηκε" : "Νέα"}
-                </td>
+            ${order.status === "completed" ? "Εκτελέστηκε" : "Νέα"}
+            </td>
+
+            <td>
+                <button
+                    type="button"
+                    class="btn btn-danger delete-today-order-btn"
+                    data-order-id="${order.id}"
+                >
+                    Διαγραφή
+                </button>
+            </td>
             `;
 
-            row.addEventListener("click", async () => {
-                if (row.classList.contains("completed-order")) {
+const deleteButton =
+    row.querySelector(".delete-today-order-btn");
+
+if (deleteButton) {
+    deleteButton.addEventListener(
+        "click",
+        async (event) => {
+            event.stopPropagation();
+
+            const confirmed = confirm(
+                "Θέλεις να διαγράψεις αυτή την παραγγελία;"
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `/api/orders/${order.id}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    alert(
+                        result.message ||
+                        "Η διαγραφή απέτυχε."
+                    );
                     return;
                 }
 
-                try {
-                    const response = await fetch(
-                        `/api/orders/${order.id}/complete`,
-                        {
-                            method: "POST"
-                        }
-                    );
+                row.remove();
+                await loadTodayOrdersCount();
 
-                    const result = await response.json();
+            } catch (error) {
+                console.error(error);
 
-                    if (result.success) {
-                        const statusCell =
-                            row.querySelector(".order-status");
+                alert(
+                    "Παρουσιάστηκε σφάλμα κατά τη διαγραφή."
+                );
+            }
+        }
+    );
+}
 
-                        if (statusCell) {
-                            statusCell.textContent = "Εκτελέστηκε";
-                        }
+            row.addEventListener("click", async () => {
+    if (order.status === "in_delivery") {
+        return;
+    }
 
-                        row.classList.add("completed-order");
-                    }
-                } catch (error) {
-                    console.error(error);
-                }
-            });
+    try {
+        const response = await fetch(
+            `/api/orders/${order.id}/send-to-driver`,
+            {
+                method: "POST"
+            }
+        );
+
+        const result = await response.json();
+
+        if (result.success) {
+            const statusCell =
+                row.querySelector(".order-status");
+
+            if (statusCell) {
+                statusCell.textContent = "Σε διανομή";
+            }
+
+            await loadTodayOrdersCount();
+
+            if (
+                typeof loadInDeliveryOrders ===
+                "function"
+            ) {
+                await loadInDeliveryOrders();
+            }
+        }
+    } catch (error) {
+        console.error(error);
+    }
+});
 
             todayOrdersBody.appendChild(row);
         });
@@ -474,7 +571,7 @@ async function loadTodayOrders() {
 
         todayOrdersBody.innerHTML = `
             <tr>
-                <td colspan="8">Σφάλμα φόρτωσης παραγγελιών.</td>
+                <td colspan="9">Σφάλμα φόρτωσης παραγγελιών.</td>
             </tr>
         `;
     }
@@ -788,7 +885,37 @@ try {
     );
 }
 
+function playReminderSound() {
+    try {
+        const audioContext =
+            new (window.AudioContext || window.webkitAudioContext)();
 
+        const oscillator =
+            audioContext.createOscillator();
+
+        const gainNode =
+            audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 880;
+        gainNode.gain.value = 0.2;
+
+        oscillator.start();
+
+        setTimeout(() => {
+            oscillator.stop();
+            audioContext.close();
+        }, 700);
+
+    } catch (error) {
+        console.error(
+            "Σφάλμα ήχου υπενθύμισης:",
+            error
+        );
+    }
+}
 
 let notifiedScheduledOrders = new Set();
 
@@ -950,3 +1077,215 @@ if (clearOrderTableBtn) {
 }
 // PRODUCT BUTTONS
 document.querySelectorAll('.order-product-btn').forEach((button)=>{button.addEventListener('click',()=>{const input=document.getElementById(button.dataset.target);if(!input)return;input.value=Number(input.value||0)+1;});});
+
+
+// =========================================================
+// ΠΡΟΒΟΛΗ ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΩΝ ΠΑΡΑΓΓΕΛΙΩΝ
+// =========================================================
+
+async function loadScheduledOrders() {
+
+    const scheduledOrdersBody =
+        document.getElementById("scheduledOrdersBody");
+
+    if (!scheduledOrdersBody) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch("/api/orders/scheduled");
+
+        const data =
+            await response.json();
+
+        if (!data.success) {
+            throw new Error(
+                "Αποτυχία φόρτωσης προγραμματισμένων παραγγελιών."
+            );
+        }
+
+        scheduledOrdersBody.innerHTML = "";
+
+        if (!data.orders || data.orders.length === 0) {
+
+            scheduledOrdersBody.innerHTML = `
+                <tr>
+                    <td colspan="9">
+                        Δεν υπάρχουν προγραμματισμένες παραγγελίες.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+        data.orders.forEach((order, index) => {
+
+            const products = [];
+
+            if (Number(order.delivery_3kg) > 0) {
+                products.push(
+                    `${order.delivery_3kg} × 3kg`
+                );
+            }
+
+            if (Number(order.delivery_10kg_mix) > 0) {
+                products.push(
+                    `${order.delivery_10kg_mix} × 10kg Μίγμα`
+                );
+            }
+
+            if (Number(order.delivery_10kg_propane) > 0) {
+                products.push(
+                    `${order.delivery_10kg_propane} × 10kg Προπάνιο`
+                );
+            }
+
+            if (Number(order.delivery_13kg) > 0) {
+                products.push(
+                    `${order.delivery_13kg} × 13kg`
+                );
+            }
+
+            if (Number(order.delivery_25kg) > 0) {
+                products.push(
+                    `${order.delivery_25kg} × 25kg`
+                );
+            }
+
+            const row =
+                document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${order.scheduled_date || "-"}</td>
+                <td>${order.scheduled_time || "-"}</td>
+                <td>${order.fullname || "-"}</td>
+                <td>${order.phone1 || "-"}</td>
+                <td>${order.area || "-"}</td>
+                <td>${order.address || "-"}</td>
+                <td>${products.join("<br>") || "-"}</td>
+                <td>
+                <button
+                    type="button"
+                    class="btn btn-danger delete-scheduled-order-btn"
+                    data-order-id="${order.id}"
+                >
+                    🗑 Διαγραφή
+                </button>
+            </td>
+            `;
+
+            scheduledOrdersBody.appendChild(row);
+
+const deleteBtn =
+    row.querySelector(".delete-scheduled-order-btn");
+
+if (deleteBtn) {
+
+    deleteBtn.addEventListener("click", async () => {
+
+        const confirmed = confirm(
+            "Θέλεις σίγουρα να διαγράψεις αυτή την προγραμματισμένη παραγγελία;"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+
+            const response = await fetch(
+                `/api/orders/scheduled/${order.id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                alert(
+                    data.message ||
+                    "Δεν έγινε η διαγραφή."
+                );
+                return;
+            }
+
+            await loadScheduledOrders();
+
+        } catch (error) {
+
+            console.error(
+                "Σφάλμα διαγραφής προγραμματισμένης παραγγελίας:",
+                error
+            );
+
+            alert(
+                "Δεν υπάρχει σύνδεση με τον server."
+            );
+        }
+    });
+}
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Σφάλμα φόρτωσης προγραμματισμένων παραγγελιών:",
+            error
+        );
+
+        scheduledOrdersBody.innerHTML = `
+            <tr>
+                <td colspan="9">
+                    Σφάλμα φόρτωσης προγραμματισμένων παραγγελιών.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+// =========================================================
+// ΑΝΟΙΓΜΑ / ΚΛΕΙΣΙΜΟ ΠΡΟΓΡΑΜΜΑΤΙΣΜΕΝΩΝ
+// =========================================================
+
+const viewScheduledOrdersBtn =
+    document.getElementById("viewScheduledOrdersBtn");
+
+const scheduledOrdersModal =
+    document.getElementById("scheduledOrdersModal");
+
+const closeScheduledOrdersBtn =
+    document.getElementById("closeScheduledOrdersBtn");
+
+
+if (
+    viewScheduledOrdersBtn &&
+    scheduledOrdersModal &&
+    closeScheduledOrdersBtn
+) {
+
+    viewScheduledOrdersBtn.addEventListener(
+        "click",
+        () => {
+
+            scheduledOrdersModal.classList.remove("hidden");
+
+            loadScheduledOrders();
+        }
+    );
+
+
+    closeScheduledOrdersBtn.addEventListener(
+        "click",
+        () => {
+
+            scheduledOrdersModal.classList.add("hidden");
+        }
+    );
+}

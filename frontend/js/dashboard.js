@@ -968,6 +968,13 @@ async function refreshDashboard() {
 
     await loadTodayCalls();
 
+    if (
+        typeof loadTodayOrdersCount ===
+        "function"
+    ) {
+        await loadTodayOrdersCount();
+    }
+
     await loadInDeliveryOrders();
 
     await loadCompletedOrders();
