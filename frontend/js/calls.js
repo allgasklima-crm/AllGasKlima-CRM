@@ -86,14 +86,27 @@ async function initializeIncomingCallWatcher() {
 
         const data = await response.json();
 
-        if (
+                if (
             response.ok &&
             data.success &&
             data.has_call &&
             data.call
         ) {
+            const incomingPhone =
+                String(data.call.phone || "").trim();
+
+            if (incomingPhone === "") {
+                return;
+            }
+
             lastIncomingCallId =
                 data.call.id;
+
+            phoneInput.value =
+                incomingPhone;
+
+            await searchCustomer();
+            await loadCallHistory();
         }
 
     } catch (error) {
@@ -126,10 +139,12 @@ function createCallHistoryItem(call) {
                     ${customerName}
                 </strong>
 
-                <span>
-                    📞 ${escapeHtml(
-                        call.phone
-                    )}
+               <span
+                    class="call-history-phone"
+                    data-phone="${escapeHtml(call.phone)}"
+                    style="cursor: pointer;"
+                >
+                    📞 ${escapeHtml(call.phone)}
                 </span>
 
                 <span>
@@ -411,6 +426,23 @@ if (callHistoryList) {
     callHistoryList.addEventListener(
         "click",
         (event) => {
+
+            const phoneElement =
+                event.target.closest(
+                    ".call-history-phone"
+                );
+
+            if (phoneElement) {
+                const phone =
+                    phoneElement.dataset.phone;
+
+                if (phone) {
+                    phoneInput.value = phone;
+                    searchCustomer();
+                }
+
+                return;
+            }
 
             const deleteButton =
                 event.target.closest(
