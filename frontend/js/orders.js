@@ -526,43 +526,35 @@ if (deleteButton) {
     );
 }
 
-            row.addEventListener("click", async () => {
-    if (order.status === "in_delivery") {
-        return;
-    }
+              row.addEventListener("click", async () => {
+                if (row.classList.contains("completed-order")) {
+                    return;
+                }
 
-    try {
-        const response = await fetch(
-            `/api/orders/${order.id}/send-to-driver`,
-            {
-                method: "POST"
-            }
-        );
+                try {
+                    const response = await fetch(
+                        `/api/orders/${order.id}/complete`,
+                        {
+                            method: "POST"
+                        }
+                    );
 
-        const result = await response.json();
+                    const result = await response.json();
 
-        if (result.success) {
-            const statusCell =
-                row.querySelector(".order-status");
+                    if (result.success) {
+                        const statusCell =
+                            row.querySelector(".order-status");
 
-            if (statusCell) {
-                statusCell.textContent = "Σε διανομή";
-            }
+                        if (statusCell) {
+                            statusCell.textContent = "Εκτελέστηκε";
+                        }
 
-            await loadTodayOrdersCount();
-
-            if (
-                typeof loadInDeliveryOrders ===
-                "function"
-            ) {
-                await loadInDeliveryOrders();
-            }
-        }
-    } catch (error) {
-        console.error(error);
-    }
-});
-
+                        row.classList.add("completed-order");
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            });
             todayOrdersBody.appendChild(row);
         });
 
