@@ -51,12 +51,39 @@ async function checkIncomingCall() {
         lastIncomingCallId =
             data.call.id;
 
+            [
+    "customerDirectoryModal",
+    "todayOrdersModal",
+    "scheduledOrdersModal",
+    "todayCallsModal",
+    "inDeliveryModal"
+].forEach((modalId) => {
+    const modal =
+        document.getElementById(modalId);
+
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+});
+
         phoneInput.value =
             incomingPhone;
 
         await searchCustomer();
 
         await loadCallHistory();
+
+        const customerForm =
+    document.getElementById(
+        "newCustomerForm"
+    );
+
+if (customerForm) {
+    customerForm.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
 
     } catch (error) {
         console.error(
@@ -86,27 +113,14 @@ async function initializeIncomingCallWatcher() {
 
         const data = await response.json();
 
-                if (
+        if (
             response.ok &&
             data.success &&
             data.has_call &&
             data.call
         ) {
-            const incomingPhone =
-                String(data.call.phone || "").trim();
-
-            if (incomingPhone === "") {
-                return;
-            }
-
             lastIncomingCallId =
                 data.call.id;
-
-            phoneInput.value =
-                incomingPhone;
-
-            await searchCustomer();
-            await loadCallHistory();
         }
 
     } catch (error) {
@@ -120,6 +134,18 @@ async function initializeIncomingCallWatcher() {
         checkIncomingCall,
         1000
     );
+
+    document.addEventListener(
+    "visibilitychange",
+    () => {
+        if (
+            document.visibilityState ===
+            "visible"
+        ) {
+            checkIncomingCall();
+        }
+    }
+);
 }
 
 function createCallHistoryItem(call) {

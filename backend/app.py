@@ -1677,6 +1677,7 @@ def get_latest_call():
             """
             SELECT *
             FROM call_history
+            WHERE deleted = 0
             ORDER BY id DESC
             LIMIT 1
             """
