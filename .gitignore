@@ -5,3 +5,8 @@ __pycache__/
 
 database/*.db
 history/*.db
+
+# Local backup files
+*.backup-*
+
+*.encoding-broken-backup
