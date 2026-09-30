@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="el">
 
 <head>
@@ -41,7 +41,7 @@
                         ΖΩΝΤΑΝΗ ΑΝΑΓΝΩΡΙΣΗ
                     </span>
 
-                    <h2>📞 Εισερχόμενη κλήση</h2>
+                    <h2>📞 Εισερχόμενη κλήση</h2><button type="button" id="noteOrderJumpBtn" class="note-order-jump-btn"><span id="noteCustomerStatusLight" class="note-customer-status-light"></span>Παραγγελία Φιαλών</button>
                 </div>
 
                 <div class="call-time-box">
@@ -492,6 +492,32 @@
                         </div>
 
 <!-- =================================================
+     SERVICE ΠΕΛΑΤΗ
+================================================== -->
+
+<div class="customer-cylinder-row customer-service-row">
+
+    <strong>Service:</strong>
+
+    <label>
+        <input
+            type="checkbox"
+            id="serviceLpg"
+        >
+        Υγραερίου
+    </label>
+
+    <label>
+        <input
+            type="checkbox"
+            id="serviceNaturalGas"
+        >
+        Φυσικού Αερίου
+    </label>
+
+</div>
+
+<!-- =================================================
      ΤΥΠΟΣ ΠΕΛΑΤΗ
 ================================================== -->
 
@@ -557,7 +583,7 @@
                      ΠΑΡΑΓΓΕΛΙΑ ΦΙΑΛΩΝ
                 ================================================== -->
 
-                <section class="panel">
+                <section class="panel" id="cylinderOrderSection">
 
                     <div class="panel-heading">
 

@@ -5,6 +5,8 @@
 let lastIncomingCallId = null;
 let incomingCallCheckRunning = false;
 
+const incomingPhoneFromApp = new URLSearchParams(window.location.search).get("incoming_phone");
+
 
 async function checkIncomingCall() {
     if (incomingCallCheckRunning) {
@@ -123,6 +125,35 @@ async function initializeIncomingCallWatcher() {
                 data.call.id;
         }
 
+        if (
+            incomingPhoneFromApp &&
+            incomingPhoneFromApp.trim() !== ""
+        ) {
+            phoneInput.value =
+                incomingPhoneFromApp.trim();
+
+            await searchCustomer();
+            await loadCallHistory();
+
+            history.replaceState(
+                {},
+                "",
+                window.location.pathname
+            );
+
+            const customerForm =
+                document.getElementById(
+                    "newCustomerForm"
+                );
+
+            if (customerForm) {
+                customerForm.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            }
+        }
+
     } catch (error) {
         console.error(
             "Δεν αρχικοποιήθηκε η παρακολούθηση κλήσεων:",
@@ -136,18 +167,17 @@ async function initializeIncomingCallWatcher() {
     );
 
     document.addEventListener(
-    "visibilitychange",
-    () => {
-        if (
-            document.visibilityState ===
-            "visible"
-        ) {
-            checkIncomingCall();
+        "visibilitychange",
+        () => {
+            if (
+                document.visibilityState ===
+                "visible"
+            ) {
+                checkIncomingCall();
+            }
         }
-    }
-);
+    );
 }
-
 function createCallHistoryItem(call) {
     const customerName =
         call.customer_name

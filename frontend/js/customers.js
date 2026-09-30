@@ -96,6 +96,12 @@ const loanHeatersInput =
 const loanEmptyCylindersInput =
     document.getElementById("loanEmptyCylinders");
 
+const serviceLpgInput =
+    document.getElementById("serviceLpg");
+
+const serviceNaturalGasInput =
+    document.getElementById("serviceNaturalGas");
+
 
 // =========================================================
 // ΤΡΕΧΩΝ ΠΕΛΑΤΗΣ
@@ -273,6 +279,14 @@ function clearCustomerForm(
         loanEmptyCylindersInput.value = "";
     }
 
+    if (serviceLpgInput) {
+        serviceLpgInput.checked = false;
+    }
+
+    if (serviceNaturalGasInput) {
+        serviceNaturalGasInput.checked = false;
+    }
+
     if (!preserveCylinders) {
         [
             cylinderScrew,
@@ -304,6 +318,8 @@ function clearCustomerForm(
     }
 
     currentCustomerId = null;
+
+    updateNoteCustomerStatus();
 }
 
 
@@ -489,6 +505,20 @@ function fillCustomerForm(customer) {
                 : "";
     }
 
+    if (serviceLpgInput) {
+        serviceLpgInput.checked =
+            Boolean(
+                Number(customer.service_lpg || 0)
+            );
+    }
+
+    if (serviceNaturalGasInput) {
+        serviceNaturalGasInput.checked =
+            Boolean(
+                Number(customer.service_natural_gas || 0)
+            );
+    }
+
     const customerType =
         customer.customer_type ||
         "retail";
@@ -501,6 +531,8 @@ function fillCustomerForm(customer) {
     if (customerTypeInput) {
         customerTypeInput.checked = true;
     }
+
+    updateNoteCustomerStatus();
 }
 
 
@@ -859,6 +891,17 @@ async function saveCustomer(event) {
             safeNonNegativeNumber(
                 loanEmptyCylindersInput?.value
             ),
+
+        service_lpg:
+            Boolean(
+                serviceLpgInput?.checked
+            ),
+
+        service_natural_gas:
+            Boolean(
+        serviceNaturalGasInput?.checked
+    ),
+
 
         customer_type:
             document.querySelector(
@@ -1588,3 +1631,10 @@ if (newCustomerBtn) {
 // =========================================================
 
 updateCustomerNumber();
+
+function updateNoteCustomerStatus() { const light = document.getElementById("noteCustomerStatusLight"); if (!light) return; const complete = [fullnameInput, phone1Input, areaInput, addressInput].every((input) => input && input.value.trim() !== ""); light.classList.toggle("is-complete", complete); }
+
+[fullnameInput, phone1Input, areaInput, addressInput].forEach((input) => { if (input) input.addEventListener("input", updateNoteCustomerStatus); }); updateNoteCustomerStatus();
+
+
+const noteOrderJumpBtn = document.getElementById("noteOrderJumpBtn"); if (noteOrderJumpBtn) { noteOrderJumpBtn.addEventListener("click", () => { const section = document.getElementById("cylinderOrderSection"); if (section) section.scrollIntoView({ behavior: "smooth", block: "start" }); }); }

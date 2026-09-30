@@ -804,3 +804,8 @@ textarea:focus {
 
 .customer-type-button input[type="radio"] { width: auto; min-height: auto; padding: 0; margin: 0; }
 
+
+.note-order-jump-btn { display: none; }
+@media (max-width: 720px) { .note-order-jump-btn { display: inline-flex; } }
+.note-customer-status-light { width: 12px; height: 12px; border-radius: 50%; background: #dc2626; display: inline-block; margin-right: 8px; flex: 0 0 12px; }
+.note-customer-status-light.is-complete { background: #16a34a; }

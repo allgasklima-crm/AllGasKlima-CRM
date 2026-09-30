@@ -125,6 +125,17 @@ if (saveOrderBtn) {
                         .getElementById("return25kg")
                         .value || 0,
 
+                    service_lpg:
+                        Boolean(
+                            document.getElementById("serviceLpg")?.checked
+                        ),
+
+                    service_natural_gas:
+                        Boolean(
+                            document.getElementById("serviceNaturalGas")?.checked
+                        ),
+
+
                 order_notes:
                     document
                         .getElementById("orderNotes")
@@ -781,6 +792,17 @@ if (scheduleOrderBtn) {
                 "return25kg"
             )?.value || 0
         ),
+
+        service_lpg:
+            Boolean(
+                document.getElementById("serviceLpg")?.checked
+            ),
+
+        service_natural_gas:
+            Boolean(
+                document.getElementById("serviceNaturalGas")?.checked
+            ),
+
 
     order_notes:
         document.getElementById(

@@ -450,6 +450,8 @@ def create_customer_columns():
         "cylinder_tall": "INTEGER NOT NULL DEFAULT 0",
         "loan_heaters": "INTEGER NOT NULL DEFAULT 0",
         "loan_empty_cylinders": "INTEGER NOT NULL DEFAULT 0",
+        "service_lpg": "INTEGER NOT NULL DEFAULT 0",
+        "service_natural_gas": "INTEGER NOT NULL DEFAULT 0",
         "customer_type": "TEXT NOT NULL DEFAULT 'retail'"
     }
 
@@ -481,13 +483,15 @@ def create_order_extra_columns():
     ]
 
     required_columns = {
-        "status": "TEXT DEFAULT 'new'",
-        "scheduled_date": "TEXT",
-        "scheduled_time": "TEXT",
-        "reminder_minutes": "INTEGER DEFAULT 30",
-        "loan_heaters": "INTEGER NOT NULL DEFAULT 0",
-        "loan_empty_cylinders": "INTEGER NOT NULL DEFAULT 0"
-    }
+    "status": "TEXT DEFAULT 'new'",
+    "scheduled_date": "TEXT",
+    "scheduled_time": "TEXT",
+    "reminder_minutes": "INTEGER DEFAULT 30",
+    "loan_heaters": "INTEGER NOT NULL DEFAULT 0",
+    "loan_empty_cylinders": "INTEGER NOT NULL DEFAULT 0",
+    "service_lpg": "INTEGER NOT NULL DEFAULT 0",
+    "service_natural_gas": "INTEGER NOT NULL DEFAULT 0"
+}
 
     for column_name, column_definition in required_columns.items():
         if column_name not in columns:
@@ -725,6 +729,17 @@ def parse_customer_data(data):
                 data.get(
                     "loan_empty_cylinders"
                 )
+            ),
+                    "service_lpg":
+            checkbox_value(
+                data,
+                "service_lpg"
+            ),
+
+        "service_natural_gas":
+            checkbox_value(
+                data,
+                "service_natural_gas"
             ),
 
         "customer_type":
@@ -1065,6 +1080,8 @@ def create_customer():
 
                     loan_heaters,
                     loan_empty_cylinders,
+                    service_lpg,
+                    service_natural_gas,
                     customer_type
                 )
 
@@ -1076,7 +1093,7 @@ def create_customer():
 
                     ?, ?, ?,
 
-                    ?, ?, ?
+                    ?, ?, ?, ?, ?
                 )
                 """,
                 (
@@ -1168,7 +1185,13 @@ def create_customer():
                     customer_data[
                         "loan_empty_cylinders"
                     ],
+                    customer_data[
+                        "service_lpg"
+                    ],
 
+                    customer_data[
+                        "service_natural_gas"
+                    ],
                     customer_data[
                         "customer_type"
                     ]
@@ -1345,8 +1368,10 @@ def update_customer(
                 cylinder_short = ?,
                 cylinder_tall = ?,
 
-                loan_heaters = ?,
+                                loan_heaters = ?,
                 loan_empty_cylinders = ?,
+                service_lpg = ?,
+                service_natural_gas = ?,
                 customer_type = ?
 
             WHERE id = ?
@@ -1439,7 +1464,13 @@ def update_customer(
                 customer_data[
                     "loan_empty_cylinders"
                 ],
+                customer_data[
+                    "service_lpg"
+                ],
 
+                customer_data[
+                    "service_natural_gas"
+                ],
                 customer_data[
                     "customer_type"
                 ],
@@ -1992,7 +2023,8 @@ def save_order():
 
                 loan_heaters,
                 loan_empty_cylinders,
-
+                service_lpg,
+                service_natural_gas,
                 order_notes,
                 status
             )
@@ -2005,7 +2037,7 @@ def save_order():
 
                 ?, ?, ?, ?, ?,
 
-                ?, ?,
+                ?, ?, ?, ?,
 
                 ?,
                 'new'
@@ -2092,6 +2124,16 @@ def save_order():
                     data.get(
                         "loan_empty_cylinders"
                     )
+                ),
+
+                checkbox_value(
+                    data,
+                    "service_lpg"
+                ),
+
+                checkbox_value(
+                    data,
+                    "service_natural_gas"
                 ),
 
                 order_notes
@@ -2679,6 +2721,9 @@ def save_scheduled_order():
                 loan_heaters,
                 loan_empty_cylinders,
 
+                service_lpg,
+                service_natural_gas,
+
                 order_notes,
                 status,
 
@@ -2695,7 +2740,7 @@ def save_scheduled_order():
 
                 ?, ?, ?, ?, ?,
 
-                ?, ?,
+                ?, ?, ?, ?,
 
                 ?,
                 'scheduled',
@@ -2784,6 +2829,16 @@ def save_scheduled_order():
                     data.get(
                         "loan_empty_cylinders"
                     )
+                ),
+
+                checkbox_value(
+                    data,
+                    "service_lpg"
+                ),
+
+                checkbox_value(
+                    data,
+                    "service_natural_gas"
                 ),
 
                 order_notes,

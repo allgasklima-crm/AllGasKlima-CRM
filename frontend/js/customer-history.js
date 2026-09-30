@@ -124,6 +124,16 @@ function buildProductText(order) {
             "Κενές φιάλες χρησιδάνειο"
         );
 
+        const services = [];
+
+        if (Number(order.service_lpg) > 0) {
+            services.push("Service Υγραερίου");
+        }
+
+        if (Number(order.service_natural_gas) > 0) {
+            services.push("Service Φυσικού Αερίου");
+        }
+
 
         return {
             delivery:
@@ -136,13 +146,17 @@ function buildProductText(order) {
         ? returns.join(", ")
         : "-",
 
-    loans:
+        loans:
         loans.length
-            ? loans.join(", ")
-            : "-"
-    };
-}
+        ? loans.join(", ")
+        : "-",
 
+        services:
+        services.length
+        ? services.join(", ")
+        : "-"
+        };
+    }
 
 function getHistoryStatusText(status) {
 
@@ -339,6 +353,10 @@ async function loadCustomerHistory() {
                             </th>
 
                             <th style="padding:10px;text-align:left;">
+                                Service
+                            </th>
+
+                            <th style="padding:10px;text-align:left;">
                                 Κατάσταση
                             </th>
 
@@ -415,7 +433,16 @@ async function loadCustomerHistory() {
                                 products.loans
                             )}
                         </td>
-
+                        <td
+                            style="
+                                padding:10px;
+                                vertical-align:top;
+                            "
+                        >
+                            ${escapeHtml(
+                                products.services
+                            )}
+                        </td>
 
                         <td
                             style="
